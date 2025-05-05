@@ -1,0 +1,44 @@
+{
+    "331": {
+        "name": "LION",
+        "base": "ENBO",
+        "aircraft_type": "F-16C",
+        "callsigns": ["LION", "VIPER", "HAWK", "EAGLE", "COBRA", "RAPTOR", "WOLF", "TIGER"]
+    },
+    "440": {
+        "name": "VIKING",
+        "base": "CVN73",
+        "aircraft_type": "FA-18C",
+        "callsigns": ["VIKING", "THOR", "STINGER", "WRAITH"]
+    },
+    "NFSA": {
+        "name": "CADET",
+        "base": "ENAN",
+        "aircraft_type": "FA-18C",
+        "callsigns": ["CADET", "STUDENT", "SCHOLAR", "ROOKIE", "TRAINEE", "NOVICE"]
+    },
+    "42": {
+        "name": "BULLY",
+        "base": "ESNQ",
+        "aircraft_type": "F-16C",
+        "callsigns": ["SWEDE", "CARL"]
+    },
+    "335": {
+        "name": "HUSKY",
+        "base": "ENDU",
+        "aircraft_type": "CH-47F / C-130J",
+        "callsigns": ["HUSKY", "LIFTER", "HOOKER", "TRUCK"]
+    },
+    "337": {
+        "name": "HUNTER",
+        "base": "ENDU",
+        "aircraft_type": "A-10C / AH-64D",
+        "callsigns": ["HUNTER", "REAPER", "HAMMER", "HOUND"]
+    },
+    "339": {
+        "name": "GHOST",
+        "base": "ENDU",
+        "aircraft_type": "OH-58D",
+        "callsigns": ["GHOST", "SPECTRE", "UMBRA"]
+    }
+}

@@ -1,0 +1,144 @@
+{
+    "holding_points": {
+        "LUNAR": {
+            "area": "POLAR WEST",
+            "transitions": {
+                "ENBO": {
+                    "inbound": ["VEPUN"],
+                    "outbound": ["VEPUN"]
+                },
+                "CVN73": {
+                    "inbound": [],
+                    "outbound": []
+                },
+                "ESNQ": {
+                    "inbound": [],
+                    "outbound": []
+                }
+            }
+        },
+        "NOVA": {
+            "area": "POLAR WEST",
+            "transitions": {
+                "ENAN": {
+                    "inbound": [],
+                    "outbound": []
+                },
+                "ENDU": {
+                    "inbound": ["ANDOR"],
+                    "outbound": ["ANDOR"]
+                },
+                "CVN73": {
+                    "inbound": [],
+                    "outbound": []
+                },
+                "ESNQ": {
+                    "inbound": [],
+                    "outbound": []
+                }
+            }
+        },
+        "NEXUS": {
+            "area": "POLAR SOUTH",
+            "transitions": {
+                "ENBO": {
+                    "inbound": ["LOLAW"],
+                    "outbound": ["LOLAW"]
+                },
+                "ENAN": {
+                    "inbound": [],
+                    "outbound": []
+                },
+                "ENDU": {
+                    "inbound": ["ANDOR", "NOVA"],
+                    "outbound": ["NOVA", "ANDOR"]
+                },
+                "CVN73": {
+                    "inbound": [],
+                    "outbound": []
+                },
+                "ESNQ": {
+                    "inbound": [],
+                    "outbound": []
+                }
+            }
+        },
+        "SOLAR": {
+            "area": "POLAR NORTH",
+            "transitions": {
+                "ENBO": {
+                    "inbound": ["ROSVI"],
+                    "outbound": ["ROSVI"]
+                },
+                "ENAN": {
+                    "inbound": ["ANDOR"],
+                    "outbound": ["ANDOR"]
+                },
+                "ENDU": {
+                    "inbound": [],
+                    "outbound": []
+                },
+                "CVN73": {
+                    "inbound": ["NOVA"],
+                    "outbound": ["NOVA"]
+                },
+                "ESNQ": {
+                    "inbound": [],
+                    "outbound": []
+                }
+            }
+        },
+        "HELIX": {
+            "area": "POLAR EAST",
+            "transitions": {
+                "ENBO": {
+                    "inbound": ["ROSVI"],
+                    "outbound": ["ROSVI"]
+                },
+                "ENAN": {
+                    "inbound": ["ANDOR", "SOLAR"],
+                    "outbound": ["SOLAR", "ANDOR"]
+                },
+                "ENDU": {
+                    "inbound": ["LAVNA"],
+                    "outbound": ["LAVNA"]
+                },
+                "CVN73": {
+                    "inbound": ["LUNAR", "BOO"],
+                    "outbound": ["BOO", "LUNAR"]
+                },
+                "ESNQ": {
+                    "inbound": [],
+                    "outbound": []
+                }
+            }
+        },
+        "(POLAR RED)": {
+            "area": "POLAR RED",
+            "transitions": {
+                "ENBO": {
+                    "inbound": [],
+                    "outbound": []
+                },
+                "ENAN": {
+                    "inbound": ["ANDOR", "POBEL"],
+                    "outbound": ["POBEL", "ANDOR"]
+                },
+                "ENDU": {
+                    "inbound": ["LAVNA"],
+                    "outbound": ["LAVNA"]
+                },
+                "CVN73": {
+                    "inbound": ["LUNAR", "BOO"],
+                    "outbound": ["BOO", "LUNAR"]
+                },
+                "ESNQ": {
+                    "inbound": [],
+                    "outbound": []
+                }
+            }
+        }
+    },
+    "base_length": 4,
+    "waypoint_lengths": [3, 5]
+}

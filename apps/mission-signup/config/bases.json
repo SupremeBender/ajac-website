@@ -1,0 +1,32 @@
+{
+    "ENAN": {
+        "name": "Andoya",
+        "runways": ["32", "07"],
+        "runway_in_use": "32",
+        "tacan": "OYA"
+    },
+    "ENBO": {
+        "name": "Bodo",
+        "runways": ["25", "07"],
+        "runway_in_use": "25",
+        "tacan": "BOO"
+    },
+    "ENDU": {
+        "name": "Bardufoss",
+        "runways": ["10", "28"],
+        "runway_in_use": "28",
+        "tacan": "BAR"
+    },
+    "CVN73": {
+        "name": "USS George Washington",
+        "runways": ["CARRIER"],
+        "runway_in_use": "CARRIER",
+        "tacan": "WAR"
+    },
+    "ESNQ": {
+        "name": "Kiruna",
+        "runways": ["21", "03"],
+        "runway_in_use": "21",
+        "tacan": ""
+    }    
+}
