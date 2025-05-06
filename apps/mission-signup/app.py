@@ -10,8 +10,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 
-# Define URL_PREFIX based on environment
-URL_PREFIX = '' # os.getenv('URL_PREFIX', '/blue')
+# Environment-based configuration
+ENVIRONMENT = os.getenv('FLASK_ENV', 'production')  # Default to production
+URL_PREFIX = os.getenv('URL_PREFIX', '')  # Empty for local, '/blue' for Apache
 
 # Remove the hard-coded proxy fix and make it configurable
 if os.getenv('BEHIND_PROXY', 'false').lower() == 'true':
@@ -20,16 +21,24 @@ if os.getenv('BEHIND_PROXY', 'false').lower() == 'true':
 # Make the URL prefix configurable
 app.config['APPLICATION_ROOT'] = URL_PREFIX
 
-# Update session configuration to be environment-aware
+# Configure app based on environment
 app.config.update(
-    SESSION_COOKIE_SECURE=os.getenv('SECURE_COOKIES', 'false').lower() == 'true',
+    # Core settings
+    APPLICATION_ROOT=URL_PREFIX,
+    SESSION_COOKIE_NAME='mission_signup_session',
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=86400,
-    SESSION_COOKIE_NAME='mission_signup_session',
-    SESSION_COOKIE_PATH=os.getenv('URL_PREFIX', '/'),
-    SERVER_NAME=os.getenv('SERVER_NAME', None)
+    
+    # Environment-specific settings
+    SESSION_COOKIE_SECURE=ENVIRONMENT == 'production',
+    SESSION_COOKIE_PATH=URL_PREFIX or '/',
+    SERVER_NAME=os.getenv('SERVER_NAME')
 )
+
+# Only apply proxy fix in production/Apache
+if ENVIRONMENT == 'production':
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Read password from file
 PASSWORD_FILE = os.path.join(os.path.dirname(__file__), 'auth', 'blufor_passwd')
@@ -290,16 +299,19 @@ def get_procedures(base, proc_type, base_config, dep_type):
 
 mission_manager = MissionManager()
 
+@app.route(f'{URL_PREFIX}/missions')
 @app.route('/missions')
 def get_missions():
     try:
-        mission_manager = MissionManager()
-        missions = mission_manager.get_all_missions()
+        # Get team from URL prefix
+        team = 'blue' if URL_PREFIX == '/blue' else 'red' if URL_PREFIX == '/red' else None
+        missions = mission_manager.get_all_missions(team=team)
         return jsonify(missions)
     except Exception as e:
         print(f"[ERROR] Failed to get missions: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route(f'{URL_PREFIX}/create_mission', methods=['POST'])
 @app.route('/create_mission', methods=['POST'])
 def create_mission():
     try:
@@ -728,6 +740,7 @@ def migrate_missions():
             'message': str(e)
         })
 
+@app.route(f'{URL_PREFIX}/login', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 @app.route('/blue/login', methods=['GET', 'POST'])
 def login():
@@ -742,6 +755,7 @@ def login():
     
     return render_template('login.html', error=error)
 
+@app.route(f'{URL_PREFIX}/', methods=['GET', 'POST'])
 @app.route('/', methods=['GET', 'POST'])
 def flight_plan():
     # Check if user is logged in

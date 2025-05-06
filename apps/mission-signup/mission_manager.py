@@ -42,8 +42,8 @@ class MissionManager:
         self._save_mission(mission_id, mission_data)
         return mission_id
 
-    def get_all_missions(self):
-        """Get list of all missions"""
+    def get_all_missions(self, team=None):
+        """Get list of all missions, optionally filtered by team"""
         missions = []
         try:
             if not os.path.exists(self.missions_dir) or not os.listdir(self.missions_dir):
@@ -53,8 +53,21 @@ class MissionManager:
             for filename in os.listdir(self.missions_dir):
                 if filename.endswith('.json'):
                     try:
-                        mission_data = self._load_mission(filename[:-5])
-                        missions.append(mission_data)
+                        mission = self._load_mission(filename[:-5])
+                        
+                        # If team is specified, filter flights
+                        if team:
+                            # Create a copy of the mission to avoid modifying the original
+                            filtered_mission = mission.copy()
+                            # Filter flights where squadron belongs to specified team
+                            filtered_mission['flights'] = [
+                                flight for flight in mission['flights']
+                                if self.squadron_data[flight['squadron']]['team'] == team
+                            ]
+                            missions.append(filtered_mission)
+                        else:
+                            missions.append(mission)
+                            
                     except Exception as e:
                         print(f"[ERROR] Failed to load mission {filename}: {str(e)}")
         except Exception as e:
@@ -277,19 +290,23 @@ class MissionManager:
 
     def _assign_frequency(self, mission):
         """Assign next available frequency"""
-        with open('config/frequencies.json') as f:
-            freq_data = json.load(f)
-        
-        used = set(mission["assigned_frequencies"])
-        frequency_list = freq_data["intraflight"]["frequencies"]
-        common_freqs = freq_data["common"]
-        
-        for freq in frequency_list:
-            # Check if frequency is not already used and not in common frequencies
-            if freq not in used and freq not in common_freqs:
-                mission["assigned_frequencies"].append(freq)
-                return f"{freq:.3f}"
-        return None
+        freq_path = os.path.join(self.config_dir, 'frequencies.json')
+        try:
+            with open(freq_path) as f:
+                freq_data = json.load(f)
+            
+            used = set(mission["assigned_frequencies"])
+            frequency_list = freq_data["intraflight"]["frequencies"]
+            common_freqs = freq_data["common"]
+            
+            for freq in frequency_list:
+                if freq not in used and freq not in common_freqs:
+                    mission["assigned_frequencies"].append(freq)
+                    return f"{freq:.3f}"
+            return None
+        except Exception as e:
+            print(f"[ERROR] Failed to assign frequency: {str(e)}")
+            return None
 
     def _generate_lotatc_correlation(self, mission):
         """Generate LotATC correlation file"""

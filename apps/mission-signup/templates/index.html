@@ -371,7 +371,7 @@
             
             <div class="flight-form">
                 <h2>Flight Planning</h2>
-                <form id="flightPlanForm" method="post" action="/blue/">
+                <form id="flightPlanForm" method="POST" action="{{ url_for('flight_plan') }}">
                     <div class="form-group">
                         <label for="mission_id">Select Mission</label>
                         <select id="mission_id" name="mission_id" required>
