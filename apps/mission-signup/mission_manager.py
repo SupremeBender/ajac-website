@@ -7,16 +7,20 @@ import re
 
 class MissionManager:
     def __init__(self):
-        self.missions_dir = 'missions'
-        if not os.path.exists(self.missions_dir):
-            os.makedirs(self.missions_dir)
+        # Get absolute paths
+        self.base_dir = os.path.dirname(__file__)
+        self.config_dir = os.path.join(self.base_dir, 'config')
+        self.missions_dir = os.path.join(self.base_dir, 'missions')
         
-        # Load squadron data
-        with open('config/squadrons.json') as f:
+        # Create missions directory if it doesn't exist
+        os.makedirs(self.missions_dir, exist_ok=True)
+        
+        # Load squadron data with absolute path
+        with open(os.path.join(self.config_dir, 'squadrons.json')) as f:
             self.squadron_data = json.load(f)
 
-        # Load aircraft data
-        with open('config/aircraft.json') as f:
+        # Load aircraft data with absolute path
+        with open(os.path.join(self.config_dir, 'aircraft.json')) as f:
             self.aircraft_data = json.load(f)
 
     def create_mission(self, name, mission_date, runways=None):
@@ -41,9 +45,21 @@ class MissionManager:
     def get_all_missions(self):
         """Get list of all missions"""
         missions = []
-        for filename in os.listdir(self.missions_dir):
-            if filename.endswith('.json'):
-                missions.append(self._load_mission(filename[:-5]))
+        try:
+            if not os.path.exists(self.missions_dir) or not os.listdir(self.missions_dir):
+                print("[INFO] No active missions found")
+                return []
+
+            for filename in os.listdir(self.missions_dir):
+                if filename.endswith('.json'):
+                    try:
+                        mission_data = self._load_mission(filename[:-5])
+                        missions.append(mission_data)
+                    except Exception as e:
+                        print(f"[ERROR] Failed to load mission {filename}: {str(e)}")
+        except Exception as e:
+            print(f"[ERROR] Failed to list missions directory: {str(e)}")
+        
         return missions
 
     def get_mission(self, mission_id):

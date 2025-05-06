@@ -1,0 +1,7 @@
+venv/
+config/apache/*
+config/systemd/*
+!config/systemd/.gitkeep
+!config/apache/.gitkeep
+apps/mission-signup/auth/*
+!apps/mission-signup/auth/.gitkeep

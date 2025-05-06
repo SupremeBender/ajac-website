@@ -9,42 +9,49 @@ import secrets
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
-# Fix for running behind proxy
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-# Set a URL prefix when running behind a proxy
-app.config['APPLICATION_ROOT'] = '/blue'
+# Define URL_PREFIX based on environment
+URL_PREFIX = '' # os.getenv('URL_PREFIX', '/blue')
 
-# Enhanced session configuration
+# Remove the hard-coded proxy fix and make it configurable
+if os.getenv('BEHIND_PROXY', 'false').lower() == 'true':
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# Make the URL prefix configurable
+app.config['APPLICATION_ROOT'] = URL_PREFIX
+
+# Update session configuration to be environment-aware
 app.config.update(
-    SESSION_COOKIE_SECURE=False,  # Allow cookies over HTTP for local development
-    SESSION_COOKIE_HTTPONLY=True,  # Prevent JavaScript access to session cookie
-    SESSION_COOKIE_SAMESITE='Lax',  # Prevent CSRF
-    PERMANENT_SESSION_LIFETIME=86400,  # Session lasts for 24 hours
-    SESSION_COOKIE_NAME='mission_signup_session',  # Custom cookie name
-    SESSION_COOKIE_PATH='/',  # Ensure cookie is valid for all paths
-    SERVER_NAME=None,  # Let the proxy handle the server name
+    SESSION_COOKIE_SECURE=os.getenv('SECURE_COOKIES', 'false').lower() == 'true',
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=86400,
+    SESSION_COOKIE_NAME='mission_signup_session',
+    SESSION_COOKIE_PATH=os.getenv('URL_PREFIX', '/'),
+    SERVER_NAME=os.getenv('SERVER_NAME', None)
 )
 
 # Read password from file
-PASSWORD_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'auth', 'blufor_passwd')
+PASSWORD_FILE = os.path.join(os.path.dirname(__file__), 'auth', 'blufor_passwd')
 try:
     with open(PASSWORD_FILE, 'r') as f:
         SITE_PASSWORD = f.read().strip()
         print(f"[INIT] Loaded password from {PASSWORD_FILE}: '{SITE_PASSWORD}'")
 except FileNotFoundError:
     print(f"[WARNING] Password file not found: {PASSWORD_FILE}, using default")
-    SITE_PASSWORD = "PetterNorthug"
+    SITE_PASSWORD = "password"
 
 # Derive secret key from password - this way when password changes, all sessions are invalidated
 app.secret_key = f"mission-signup-{SITE_PASSWORD}"
 
+
 def load_config(filename):
     try:
-        with open(os.path.join('config', filename)) as f:
+        config_path = os.path.join(os.path.dirname(__file__), 'config', filename)
+        with open(config_path) as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"[ERROR] Configuration file '{filename}' not found.")
+        print(f"[ERROR] Configuration file '{filename}' not found at {config_path}")
         return {}
     except json.JSONDecodeError as e:
         print(f"[ERROR] Failed to parse JSON in '{filename}': {e}")
@@ -284,9 +291,14 @@ def get_procedures(base, proc_type, base_config, dep_type):
 mission_manager = MissionManager()
 
 @app.route('/missions')
-def list_missions():
-    missions = mission_manager.get_all_missions()
-    return jsonify(missions)
+def get_missions():
+    try:
+        mission_manager = MissionManager()
+        missions = mission_manager.get_all_missions()
+        return jsonify(missions)
+    except Exception as e:
+        print(f"[ERROR] Failed to get missions: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/create_mission', methods=['POST'])
 def create_mission():
@@ -580,7 +592,7 @@ def get_procedures_endpoint():
         traceback.print_exc()
         return jsonify({'error': str(e)})
 
-@app.route('/blue/squadron-bases', methods=['POST'])
+@app.route('/squadron-bases', methods=['POST'])
 def squadron_bases_endpoint():
     """Endpoint to get bases for a squadron"""
     try:
@@ -613,7 +625,7 @@ def squadron_bases_endpoint():
         traceback.print_exc()
         return jsonify({'error': str(e)})
 
-@app.route('/blue/squadron-aircraft', methods=['POST'])
+@app.route('/squadron-aircraft', methods=['POST'])
 def squadron_aircraft_endpoint():
     """Endpoint to get aircraft for a squadron and base"""
     try:
@@ -684,7 +696,7 @@ def squadron_aircraft_endpoint():
         traceback.print_exc()
         return jsonify({'error': str(e)})
 
-@app.route('/blue/get-procedures', methods=['POST'])
+@app.route('/get-procedures', methods=['POST'])
 def get_procedures_blue_endpoint():
     """Endpoint to get procedures for a base and type"""
     # Redirect to the main procedures endpoint

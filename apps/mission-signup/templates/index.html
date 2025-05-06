@@ -611,7 +611,7 @@
                     if (!squadronValue) return;
                     
                     // Fetch bases for this squadron from the server
-                    fetch('/blue/squadron-bases', {
+                    fetch('/squadron-bases', {
                         method: 'POST',
                         body: new FormData(document.getElementById('flightPlanForm')),
                         headers: {
@@ -660,7 +660,7 @@
                     formData.append('base', baseValue);
                     formData.append('mission_id', document.getElementById('mission_id')?.value || '');
                     
-                    fetch('/blue/squadron-aircraft', {
+                    fetch('/squadron-aircraft', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -742,7 +742,7 @@
                 }
                 
                 // Fetch procedures from the server
-                fetch('/blue/get-procedures', {
+                fetch('/get-procedures', {
                     method: 'POST',
                     body: formData,
                     headers: {
@@ -764,7 +764,7 @@
             // Function to load active missions from the server
             function loadActiveMissions() {
                 console.log('[INFO] Loading active missions');
-                fetch('/blue/missions')
+                fetch('/missions')
                     .then(response => response.json())
                     .then(missions => {
                         console.log('[INFO] Missions loaded successfully:', Object.keys(missions).length);
@@ -1118,7 +1118,7 @@
                                             formData.append('aircraft_type', flight.aircraft_type);
                                             formData.append('callsign_prefix', flight.callsign);
                                             
-                                            fetch('/blue/squadron-aircraft', {
+                                            fetch('/squadron-aircraft', {
                                                 method: 'POST',
                                                 body: formData
                                             })
@@ -1186,7 +1186,7 @@
                         formData.append('action', 'Preview Route');
                         
                         // Send form data via fetch
-                        fetch('/blue/', {
+                        fetch('/', {
                             method: 'POST',
                             body: formData
                         })
@@ -1245,7 +1245,7 @@
                     
                     const formData = new FormData(this);
                     
-                    fetch('/blue/create_mission', {
+                    fetch('/create_mission', {
                         method: 'POST',
                         body: formData
                     })
