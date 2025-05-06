@@ -1,7 +1,50 @@
+# Virtual Environment
 venv/
-config/apache/*
-config/systemd/*
-!config/systemd/.gitkeep
-!config/apache/.gitkeep
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables & Secrets
+.env
+*.env
+.env.*
+*.pem
+*.key
 apps/mission-signup/auth/*
 !apps/mission-signup/auth/.gitkeep
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Application specific
+config/apache/*
+!config/apache/.gitkeep
+config/systemd/*
+!config/systemd/.gitkeep
+*.log
+logs/
+missions/*.json
+temp/
+uploads/
+
+# Package files
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
