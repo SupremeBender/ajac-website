@@ -30,7 +30,7 @@ config/systemd/*
 !config/systemd/.gitkeep
 *.log
 logs/
-missions/*.json
+apps/mission-signup/missions/*.json
 temp/
 uploads/
 
