@@ -58,5 +58,21 @@
     "001 (OH-58)": {"squadron": "339", "base": "ENDU", "type": "OH-58D"},
     "002 (OH-58)": {"squadron": "339", "base": "ENDU", "type": "OH-58D"},
     "003 (OH-58)": {"squadron": "339", "base": "ENDU", "type": "OH-58D"},
-    "004 (OH-58)": {"squadron": "339", "base": "ENDU", "type": "OH-58D"}
+    "004 (OH-58)": {"squadron": "339", "base": "ENDU", "type": "OH-58D"},
+    "40 (F-16)": {"squadron": "42", "base": "ESNQ", "type": "F-16C"},
+    "41 (F-16)": {"squadron": "42", "base": "ESNQ", "type": "F-16C"},
+    "42 (F-16)": {"squadron": "42", "base": "ESNQ", "type": "F-16C"},
+    "43 (F-16)": {"squadron": "42", "base": "ESNQ", "type": "F-16C"},
+    "44 (F-16)": {"squadron": "42", "base": "ESNQ", "type": "F-16C"},
+    "45 (F-16)": {"squadron": "42", "base": "ESNQ", "type": "F-16C"},
+    "46 (F-16)": {"squadron": "42", "base": "ESNQ", "type": "F-16C"},
+    "47 (F-16)": {"squadron": "42", "base": "ESNQ", "type": "F-16C"},
+    "50 (FA-18)": {"squadron": "42", "base": "ESNQ", "type": "F/A-18C"},
+    "51 (FA-18)": {"squadron": "42", "base": "ESNQ", "type": "F/A-18C"},
+    "52 (FA-18)": {"squadron": "42", "base": "ESNQ", "type": "F/A-18C"},
+    "53 (FA-18)": {"squadron": "42", "base": "ESNQ", "type": "F/A-18C"},
+    "54 (FA-18)": {"squadron": "42", "base": "ESNQ", "type": "F/A-18C"},
+    "55 (FA-18)": {"squadron": "42", "base": "ESNQ", "type": "F/A-18C"},
+    "56 (FA-18)": {"squadron": "42", "base": "ESNQ", "type": "F/A-18C"},
+    "57 (FA-18)": {"squadron": "42", "base": "ESNQ", "type": "F/A-18C"}
 }

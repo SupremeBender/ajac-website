@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BLUFOR Flight Plan Filing</title>
+    <title>{% if team %}{{ team|upper }} Team{% else %}BLUFOR{% endif %} Flight Plan Filing</title>
     <style>
         html, body { 
             margin: 0;
@@ -361,7 +361,7 @@
 <body>
     <div class="container">
         <div class="left-column">
-            <h1>BLUFOR Mission Planning</h1>
+            <h1>{% if team %}{{ team|upper }} Team{% else %}BLUFOR{% endif %} Mission Planning</h1>
             
             {% if success_message %}
             <div class="success-message">
@@ -539,6 +539,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('[INFO] Initializing form handlers with proper JSON configuration');
             
+            // Get team from URL path
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            let team = null;
+            if (pathParts.length > 0 && (pathParts[0] === 'blue' || pathParts[0] === 'red')) {
+                team = pathParts[0];
+            }
+
             // Load active missions
             loadActiveMissions();
             
@@ -611,9 +618,11 @@
                     if (!squadronValue) return;
                     
                     // Fetch bases for this squadron from the server
+                    const formData = new FormData(document.getElementById('flightPlanForm'));
+                    if (team) formData.append('team', team);
                     fetch('/squadron-bases', {
                         method: 'POST',
-                        body: new FormData(document.getElementById('flightPlanForm')),
+                        body: formData,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest'
                         }
@@ -659,6 +668,7 @@
                     formData.append('squadron', squadronValue);
                     formData.append('base', baseValue);
                     formData.append('mission_id', document.getElementById('mission_id')?.value || '');
+                    if (team) formData.append('team', team);
                     
                     fetch('/squadron-aircraft', {
                         method: 'POST',
@@ -740,6 +750,7 @@
                 if (missionId) {
                     formData.append('mission_id', missionId);
                 }
+                if (team) formData.append('team', team);
                 
                 // Fetch procedures from the server
                 fetch('/get-procedures', {
@@ -764,7 +775,11 @@
             // Function to load active missions from the server
             function loadActiveMissions() {
                 console.log('[INFO] Loading active missions');
-                fetch('/missions')
+                // Use the current path to maintain team context
+                const path = window.location.pathname;
+                const missionsPath = path.endsWith('/') ? path + 'missions' : path + '/missions';
+                
+                fetch(missionsPath)
                     .then(response => response.json())
                     .then(missions => {
                         console.log('[INFO] Missions loaded successfully:', Object.keys(missions).length);
@@ -1117,6 +1132,7 @@
                                             formData.append('base', flight.departure.base);
                                             formData.append('aircraft_type', flight.aircraft_type);
                                             formData.append('callsign_prefix', flight.callsign);
+                                            if (team) formData.append('team', team);
                                             
                                             fetch('/squadron-aircraft', {
                                                 method: 'POST',
@@ -1168,25 +1184,13 @@
                     if (submitter && submitter.value === 'Preview Route') {
                         e.preventDefault();
 
-                        // Save current form values before submission
-                        const currentValues = {
-                            squadron: document.getElementById('squadron')?.value,
-                            dep_base: document.getElementById('dep_base')?.value,
-                            aircraft: document.getElementById('aircraft')?.value,
-                            dep_type: document.getElementById('dep_type')?.value,
-                            dep_proc: document.getElementById('dep_proc')?.value,
-                            training_area: document.getElementById('training_area')?.value,
-                            rec_base: document.getElementById('rec_base')?.value,
-                            rec_type: document.getElementById('rec_type')?.value,
-                            rec_proc: document.getElementById('rec_proc')?.value
-                        };
-                        
                         // Create form data with action
                         const formData = new FormData(this);
                         formData.append('action', 'Preview Route');
+                        if (team) formData.append('team', team);
                         
-                        // Send form data via fetch
-                        fetch('/', {
+                        // Send form data via fetch using current path
+                        fetch(window.location.pathname, {
                             method: 'POST',
                             body: formData
                         })
@@ -1205,27 +1209,7 @@
                                     outputField.classList.remove('hidden');
                                 }
                                 
-                                // Restore all saved values
-                                if (document.getElementById('squadron')) 
-                                    document.getElementById('squadron').value = currentValues.squadron;
-                                if (document.getElementById('dep_base'))
-                                    document.getElementById('dep_base').value = currentValues.dep_base;
-                                if (document.getElementById('aircraft'))
-                                    document.getElementById('aircraft').value = currentValues.aircraft;
-                                if (document.getElementById('dep_type'))
-                                    document.getElementById('dep_type').value = currentValues.dep_type;
-                                if (document.getElementById('dep_proc'))
-                                    document.getElementById('dep_proc').value = currentValues.dep_proc;
-                                if (document.getElementById('training_area'))
-                                    document.getElementById('training_area').value = currentValues.training_area;
-                                if (document.getElementById('rec_base'))
-                                    document.getElementById('rec_base').value = currentValues.rec_base;
-                                if (document.getElementById('rec_type'))
-                                    document.getElementById('rec_type').value = currentValues.rec_type;
-                                if (document.getElementById('rec_proc'))
-                                    document.getElementById('rec_proc').value = currentValues.rec_proc;
-                                
-                                console.log('[INFO] Form values restored after preview');
+                                console.log('[INFO] Route preview updated successfully');
                             } else {
                                 console.error('[ERROR] Could not find route preview in response');
                             }
@@ -1244,6 +1228,7 @@
                     e.preventDefault();
                     
                     const formData = new FormData(this);
+                    if (team) formData.append('team', team);
                     
                     fetch('/create_mission', {
                         method: 'POST',

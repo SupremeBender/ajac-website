@@ -97,6 +97,8 @@ class MissionManager:
     def _create_new_flight(self, mission, flight_data):
         """Create a new flight in the mission (flight lead)"""
         squadron_id = flight_data['squadron']
+        # Get squadron's team
+        team = self.squadron_data[squadron_id]['team']
         
         # Get available callsigns for this squadron
         squadron_callsigns = self.squadron_data[squadron_id].get('callsigns', [])
@@ -154,6 +156,7 @@ class MissionManager:
         # Create new flight structure with unique callsign
         new_flight = {
             "squadron": squadron_id,
+            "team": team,  # Add team to flight data
             "callsign": f"{selected_callsign} {flight_num}",
             "aircraft_type": flight_data['aircraft_type'],
             "area": flight_data['area'],

@@ -7,6 +7,17 @@ from datetime import datetime
 from mission_manager import MissionManager
 import secrets
 from werkzeug.middleware.proxy_fix import ProxyFix
+from dotenv import load_dotenv
+
+
+# Load environment-specific .env file
+env = os.getenv('FLASK_ENV', 'production')
+env_file = f'.env.{env}'
+if os.path.exists(env_file):
+    print(f"[INIT] Loading environment from {env_file}")
+    load_dotenv(env_file)
+else:
+    print(f"[WARNING] Environment file {env_file} not found")
 
 app = Flask(__name__)
 
@@ -299,12 +310,14 @@ def get_procedures(base, proc_type, base_config, dep_type):
 
 mission_manager = MissionManager()
 
-@app.route(f'{URL_PREFIX}/missions')
+@app.route('/<team>/missions')
 @app.route('/missions')
-def get_missions():
+def get_missions(team=None):
     try:
-        # Get team from URL prefix
-        team = 'blue' if URL_PREFIX == '/blue' else 'red' if URL_PREFIX == '/red' else None
+        if team not in ['blue', 'red']:
+            team = None
+            
+        print(f"[DEBUG] Getting missions for team: {team}")
         missions = mission_manager.get_all_missions(team=team)
         return jsonify(missions)
     except Exception as e:
@@ -317,6 +330,8 @@ def create_mission():
     try:
         name = request.form.get('mission_name')
         date = request.form.get('mission_date')
+        team = request.args.get('team')  # Get team from query params
+        
         if not re.match(r'^\d{4}-\d{2}-\d{2}$', date):
             return {'status': 'error', 'message': 'Invalid date format'}
             
@@ -327,9 +342,10 @@ def create_mission():
             if rwy:
                 runways[base] = rwy
         
-        mission_id = mission_manager.create_mission(name, date, runways)
+        mission_id = mission_manager.create_mission(name, date, runways, team=team)
         return {'status': 'success', 'mission_id': mission_id}
     except Exception as e:
+        print(f"[ERROR] Failed to create mission: {str(e)}")
         return {'status': 'error', 'message': str(e)}
 
 @app.route('/new-flight-form', methods=['POST'])
@@ -338,27 +354,26 @@ def get_new_flight_form():
     try:
         mission_id = request.form.get('mission_id', '')
         squadron = request.form.get('squadron', '')
-        
-        print(f"[DEBUG] /new-flight-form: mission_id={mission_id}, squadron={squadron}")
-        
-        # Prepare response data structure
+        # Get team from form or args
+        team = request.form.get('team') or request.args.get('team')
+        print(f"[DEBUG] /new-flight-form: mission_id={mission_id}, squadron={squadron}, team={team}")
         response_data = {
             'options': {},
             'errors': [],
             'selected': {}
         }
-        
-        # Get all squadrons for initial form
-        squadrons = sorted(squadron_data.keys())
+        # Filter squadrons by team
+        if team in ['blue', 'red']:
+            squadrons = sorted([sqn for sqn, data in squadron_data.items() if data.get('team') == team])
+        else:
+            squadrons = sorted(squadron_data.keys())
         squadron_options = ['<option value="">Choose your squadron</option>']
         for sqn in squadrons:
             squadron_options.append(f'<option value="{sqn}"{" selected" if sqn == squadron else ""}>{sqn}</option>')
         response_data['options']['squadron'] = ''.join(squadron_options)
-        
         # If squadron is selected, populate bases for that squadron
         if squadron:
             # Get available bases - direct approach, no helper function
-            # Look at aircraft data directly
             available_bases = set()
             print(f"[DEBUG] Looking for all aircraft for squadron {squadron}")
             
@@ -369,19 +384,8 @@ def get_new_flight_form():
                     if 'base' in meta and meta['base']:
                         available_bases.add(meta['base'])
             
-            # Ensure we have the response with hardcoded base data for common squadrons
-            # This is a direct emergency fallback in the API endpoint itself
             if not available_bases:
-                print(f"[DEBUG] No aircraft bases found, using emergency mapping")
-                emergency_mapping = {
-                    '331': ['ENBO', 'ENAN', 'ENDU'],
-                    '440': ['CVN73'],
-                    'NFSA': ['ENAN'],
-                    '337': ['ENDU'],
-                    '42': ['ESNQ']
-                }
-                if squadron in emergency_mapping:
-                    available_bases = set(emergency_mapping[squadron])
+                print(f"[DEBUG] No aircraft bases found")
             
             available_bases = sorted(list(available_bases))
             
@@ -425,7 +429,10 @@ def get_new_flight_form():
 def get_squadron_bases_direct():
     """Direct endpoint to get base options for a squadron"""
     squadron = request.form.get('squadron', '')
-    
+    team = request.form.get('team') or request.args.get('team')
+    # Filter squadron by team if provided
+    if team in ['blue', 'red'] and squadron and squadron_data.get(squadron, {}).get('team') != team:
+        return jsonify({'html': '', 'bases': []})
     # Get bases directly from aircraft data
     bases = set()
     for tail, meta in aircraft_data.items():
@@ -451,6 +458,10 @@ def get_squadron_aircraft_direct():
     """Direct endpoint to get aircraft options for a squadron and base"""
     squadron = request.form.get('squadron', '')
     base = request.form.get('base', '')
+    team = request.form.get('team') or request.args.get('team')
+    # Filter squadron by team if provided
+    if team in ['blue', 'red'] and squadron and squadron_data.get(squadron, {}).get('team') != team:
+        return jsonify({'html': '', 'aircraft': []})
     mission_id = request.form.get('mission_id', '')
     aircraft_type = request.form.get('aircraft_type', '')
     lead_callsign = request.form.get('callsign_prefix', '')
@@ -740,33 +751,47 @@ def migrate_missions():
             'message': str(e)
         })
 
-@app.route(f'{URL_PREFIX}/login', methods=['GET', 'POST'])
+@app.route('/<team>/login', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
-@app.route('/blue/login', methods=['GET', 'POST'])
-def login():
+def login(team=None):
     error = None
     if request.method == 'POST':
         if request.form['password'] == SITE_PASSWORD:
-            session.permanent = True  # Make session permanent
+            session.permanent = True
             session['logged_in'] = True
-            return redirect(url_for('flight_plan', _external=True))
+            return redirect(url_for('flight_plan', team=team, _external=True))
         else:
             error = 'Invalid password. Please try again.'
     
     return render_template('login.html', error=error)
 
-@app.route(f'{URL_PREFIX}/', methods=['GET', 'POST'])
+
+@app.route('/<team>/', methods=['GET', 'POST'])
 @app.route('/', methods=['GET', 'POST'])
-def flight_plan():
+def flight_plan(team=None):
+    # Get team directly from URL path
+    if team not in ['blue', 'red']:
+        team = None
+        
+    print(f"[DEBUG] Path: {request.path}, Team: {team}")
+
     # Check if user is logged in
     if not session.get('logged_in'):
-        return redirect(url_for('login', _external=True))
+        return redirect(url_for('login', team=team, _external=True))
         
     print("[ROUTE] Received request")
     print(f"[DEBUG] Form data: {dict(request.form)}")
+
     output = ""
     route_preview = False
     is_ajax = request.form.get('partial_update') == 'true'
+
+    # Filter squadrons by team
+    available_squadrons = [
+        squadron_id for squadron_id, data in squadron_data.items()
+        if not team or data.get('team') == team
+    ]
+    print(f"[DEBUG] Available squadrons for team {team}: {available_squadrons}")
     
     # Always initialize these before any use
     selected_aircraft = []
@@ -863,10 +888,12 @@ def flight_plan():
             print(f"[DEBUG] Successfully joined flight: {callsign_prefix} as #{desired_slot}")
             # Redirect to the main page with success message
             return render_template('index.html',
-                missions=mission_manager.get_all_missions(),
+                missions=mission_manager.get_all_missions(team=team),  # Filter by team
                 base_info=base_data,
                 available_bases=available_bases if 'available_bases' in locals() else [],
                 selected_mission_id=mission_id,
+                squadrons=sorted(available_squadrons),  # Use filtered squadrons
+                team=team,  # Pass team context
                 success_message=f"Successfully joined flight {callsign_prefix} as #{desired_slot}"
             )
 
@@ -937,10 +964,12 @@ def flight_plan():
                 
             print(f"[DEBUG] Flight created successfully: {result['callsign']}")
             return render_template('index.html',
-                missions=mission_manager.get_all_missions(),
+                missions=mission_manager.get_all_missions(team=team),  # Filter by team
                 base_info=base_data,
                 available_bases=available_bases,
                 selected_mission_id=mission_id,
+                squadrons=sorted(available_squadrons),  # Use filtered squadrons
+                team=team,  # Pass team context
                 success_message=f"Flight plan filed successfully: {result['callsign']}"
             )
 
@@ -1182,7 +1211,7 @@ def flight_plan():
             selected_flight_data=lead_flight if selected_flight else None,
             aircraft_data=aircraft_data,
             available_flights=available_flights,
-            squadrons=sorted(squadron_data.keys()),
+            squadrons=sorted(available_squadrons),  # Use filtered squadrons
             selected_aircraft=selected_aircraft,
             selected_aircraft_tail=aircraft_tail,
             dep_procs=[p.replace("→ ", "") for group, procs in (get_procedures(dep_base, 'dep', base_data.get(dep_base, {}), dep_type) if dep_base and dep_type else []) for p in procs],
@@ -1205,16 +1234,17 @@ def flight_plan():
         
         # Make sure we pass all required template variables even in error case
         return render_template('index.html',
-            error=str(e),
-            missions=mission_manager.get_all_missions(),
+            error=str(e) if 'e' in locals() else None,
+            missions=mission_manager.get_all_missions(team=team),  # Filter by team
             base_info=base_data,
-            available_bases=[],
-            selected_mission_id='',
-            selected_flight='',
-            selected_flight_data=None,
+            available_bases=available_bases if 'available_bases' in locals() else [],
+            selected_mission_id=mission_id if 'mission_id' in locals() else '',
+            selected_flight=selected_flight if 'selected_flight' in locals() else '',
+            selected_flight_data=lead_flight if 'lead_flight' in locals() else None,
             aircraft_data=aircraft_data,
-            available_flights=[],
-            squadrons=sorted(squadron_data.keys()),
+            available_flights=available_flights if 'available_flights' in locals() else [],
+            squadrons=sorted(available_squadrons),  # Use filtered squadrons
+            team=team,  # Pass team context
             selected_aircraft=[],
             selected_aircraft_tail='',
             dep_procs=[],
@@ -1240,10 +1270,22 @@ def add_header(response):
     return response
 
 if __name__ == '__main__':
-    print("[INIT] Starting Flask app")
-    # Configuration for Gunicorn production server
-    # This app is intended to be run behind Nginx with Gunicorn
-    # Command to run: gunicorn -w 4 -b 127.0.0.1:8000 app:app
+    port = 8000
+    host = '127.0.0.1'
     
-    # For development only - do not use in production
-    app.run(debug=False, host='127.0.0.1', port=8000)
+    print(f"[INIT] Starting Flask app on {host}:{port}")
+    print(f"[INIT] Environment: {ENVIRONMENT}")
+    print(f"[INIT] URL_PREFIX: {URL_PREFIX}")
+    print(f"[INIT] Server name: {app.config.get('SERVER_NAME')}")
+    
+    # For development, remove the SERVER_NAME configuration
+    if ENVIRONMENT == 'development':
+        app.config['SERVER_NAME'] = None
+        print("[INIT] Removed SERVER_NAME for development")
+    
+    try:
+        app.run(debug=True, host=host, port=port)
+    except OSError as e:
+        print(f"[ERROR] Port {port} is in use, trying {port + 1}")
+        port = 8001
+        app.run(debug=True, host=host, port=port)

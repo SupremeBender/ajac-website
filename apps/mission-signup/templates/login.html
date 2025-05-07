@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BLUFOR Login</title>
+    <title>{% if team %}{{ team|upper }} Team{% else %}BLUFOR{% endif %} Login</title>
     <style>
         html, body { 
             margin: 0;
@@ -80,10 +80,10 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>BLUFOR Mission Planning</h1>
+        <h1>{% if team %}{{ team|upper }} Team{% else %}BLUFOR{% endif %} Mission Planning</h1>
         
         <div class="login-instructions">
-            Enter the BLUFOR password to access the mission planning system.
+            Enter the {% if team %}{{ team|upper }} team{% else %}BLUFOR{% endif %} password to access the mission planning system.
         </div>
         
         {% if error %}
