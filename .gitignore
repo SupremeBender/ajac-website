@@ -41,4 +41,7 @@ sdist/
 develop-eggs/
 .installed.cfg
 lib/
-lib64/
+lib64/venv/
+__pycache__/
+*.pyc
+instance/
