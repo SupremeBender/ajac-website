@@ -10,8 +10,6 @@ __pycache__/
 .env.*
 *.pem
 *.key
-apps/mission-signup/auth/*
-!apps/mission-signup/auth/.gitkeep
 
 # IDE specific files
 .vscode/
@@ -24,15 +22,11 @@ apps/mission-signup/auth/*
 Thumbs.db
 
 # Application specific
-config/apache/*
-!config/apache/.gitkeep
-config/systemd/*
-!config/systemd/.gitkeep
 *.log
 logs/
-apps/mission-signup/missions/*.json
 temp/
 uploads/
+reference/
 
 # Package files
 *.egg
