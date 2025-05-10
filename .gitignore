@@ -27,6 +27,7 @@ logs/
 temp/
 uploads/
 reference/
+instance/
 
 # Package files
 *.egg
