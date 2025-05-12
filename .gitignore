@@ -1,5 +1,5 @@
 # Virtual Environment
-venv/
+.venv/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -26,8 +26,10 @@ Thumbs.db
 logs/
 temp/
 uploads/
-reference/
+(reference)/
 instance/
+!instance/*.example
+!instance/README.md
 
 # Package files
 *.egg
@@ -45,4 +47,3 @@ lib/
 lib64/venv/
 __pycache__/
 *.pyc
-instance/

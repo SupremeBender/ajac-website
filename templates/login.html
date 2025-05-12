@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - AJAC{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h1>Welcome to AJAC</h1>
+    <p>Please log in with your Discord account to continue.</p>
+    <a href="{{ url_for('discord_login') }}" class="btn discord-btn">
+        Login with Discord
+    </a>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .login-container {
+        max-width: 400px;
+        margin: 100px auto;
+        text-align: center;
+        padding: 2rem;
+        background-color: #222;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .discord-btn {
+        background-color: #5865F2;
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+    
+    .discord-btn:hover {
+        background-color: #4752C4;
+    }
+</style>
+{% endblock %}

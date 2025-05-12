@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AJAC{% endblock %}</title>
+    <style>
+        :root {
+            --primary-color: #333333;
+            --secondary-color: #666666;
+            --accent-color: #999999;
+            --text-color: #ffffff;
+            --background-color: #111111;
+        }
+
+        /* Theme colors */
+        body.admin-theme {
+            --primary-color: #6a0dad;
+            --secondary-color: #9370db;
+            --accent-color: #d8bfd8;
+            --background-color: #2a1635;
+        }
+
+        body.blue-theme {
+            --primary-color: #1e90ff;
+            --secondary-color: #00bfff;
+            --accent-color: #87cefa;
+            --background-color: #0a192f;
+        }
+
+        body.red-theme {
+            --primary-color: #ff4500;
+            --secondary-color: #ff6347;
+            --accent-color: #ffa07a;
+            --background-color: #2d0c02;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-color);
+            margin-left: 1rem;
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+
+<body
+    class="{% if theme == 'admin' %}admin-theme{% elif theme == 'blue-team' %}blue-theme{% elif theme == 'red-team' %}red-theme{% endif %}">
+    <header>
+        <div class="logo">AJAC</div>
+        <nav>
+            {% if session.user %}
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
