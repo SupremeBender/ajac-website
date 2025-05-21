@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Mission Signup{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Mission Signup</h1>
+    <div class="card my-4">
+        <div class="card-header">
+            <h2>Sign Up for Mission</h2>
+        </div>
+        <div class="card-body">
+            <h4>Mission: <span class="text-primary">{{ mission.name }}</span></h4>
+            <p>{{ mission.description }}</p>
+            <ul class="list-unstyled">
+                <li><strong>Date (IRL):</strong> {{ mission.time_real }}</li>
+                <li><strong>Date (In-Game):</strong> {{ mission.time_ingame }}</li>
+                <li><strong>Status:</strong> {{ mission.status }}</li>
+            </ul>
+            <!-- TODO: Add signup/flight plan form here -->
+            <a href="{{ url_for('signup.dashboard', mission_id=mission.id) }}" class="btn btn-secondary mt-3">Back to Mission List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

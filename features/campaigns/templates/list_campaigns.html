@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Campaigns{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Campaigns</h1>
+    <div class="my-4">
+        <a href="{{ url_for('campaigns.create_campaign') }}" class="btn btn-primary">Create New Campaign</a>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h2>Available Campaigns</h2>
+        </div>
+        <div class="card-body">
+            {% if campaigns %}
+            <div class="list-group">
+                {% for campaign in campaigns %}
+                <div class="list-group-item d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                    <div class="flex-grow-1">
+                        <h5 class="mb-1">{{ campaign.name }}</h5>
+                        <div class="mb-1 text-muted">
+                            <strong>Shorthand:</strong> {{ campaign.shorthand }}
+                            &nbsp;|&nbsp;
+                            <strong>Type:</strong> {{ campaign.type }}
+                            &nbsp;|&nbsp;
+                            <strong>Status:</strong> {{ campaign.status|capitalize }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>No campaigns available. Click "Create New Campaign" to get started.</p>
+            {% endif %}
+        </div>
+    </div>
+    <footer class="mt-5">
+        <p class="text-center text-muted">&copy; {{ current_year }} AJAC Flight Operations</p>
+    </footer>
+</div>
+{% endblock %}

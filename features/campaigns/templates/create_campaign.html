@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Create Campaign{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Create New Campaign</h1>
+    <form method="POST" class="mt-4">
+        <div class="form-group">
+            <label for="name">Campaign Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="shorthand">Shorthand</label>
+            <input type="text" class="form-control" id="shorthand" name="shorthand" required 
+                   placeholder="e.g., PP15, RF22" title="Short code used for mission IDs">
+            <small class="form-text text-muted">Short code used for mission IDs (e.g., PP15, RF22)</small>
+        </div>
+        <div class="form-group">
+            <label for="type">Type</label>
+            <select class="form-control" id="type" name="type" required>
+                <option value="EX">Exercise (EX)</option>
+                <option value="OP">Operation (OP)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select class="form-control" id="status" name="status" required>
+                <option value="active">Active</option>
+                <option value="planned">Planned</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="persistent_ac_location">
+                <input type="checkbox" id="persistent_ac_location" name="persistent_ac_location" checked>
+                Persistent A/C Location
+            </label>
+            <small class="form-text text-muted">If enabled, aircraft can only depart from their current location as defined in aircraft.json.</small>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Campaign</button>
+        <a href="{{ url_for('campaigns.list_campaigns_route') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+    <footer class="mt-5">
+        <p class="text-center text-muted">&copy; {{ current_year }} AJAC Flight Operations</p>
+    </footer>
+</div>
+{% endblock %}

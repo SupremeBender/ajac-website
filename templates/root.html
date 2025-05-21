@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}AJAC Flight Operations{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="jumbotron bg-dark">
+        <h1 class="display-4">AJAC Operations Portal</h1>
+        <p class="lead">Central hub for campaign and mission management</p>
+        {% if not is_authenticated %}
+        <hr class="my-4">
+        <p>Please log in with your Discord account to access mission signup and other features.</p>
+        <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}" role="button">
+            <i class="fab fa-discord mr-2"></i> Login with Discord
+        </a>
+        {% endif %}
+    </div>
+
+    {% if is_authenticated %}
+    <div class="row mb-5 mt-5">
+        <div class="col-md-12 mb-4">
+            <h2>Available Features</h2>
+            <hr>
+        </div>
+        
+        {% if can_access_signup %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                    <h3 class="card-title">Mission Signup</h3>
+                    <p class="card-text">View available missions and sign up for flights</p>
+                    <a href="{{ url_for('signup.dashboard') }}" class="btn btn-primary">Go to Mission Signup</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if can_access_missions %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-fighter-jet fa-3x mb-3"></i>
+                    <h3 class="card-title">Mission Admin</h3>
+                    <p class="card-text">Create and manage missions for your campaigns</p>
+                    <a href="{{ url_for('missions.list_missions') }}" class="btn btn-primary">Manage Missions</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if can_access_campaigns %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-flag fa-3x mb-3"></i>
+                    <h3 class="card-title">Campaign Admin</h3>
+                    <p class="card-text">Create and manage campaigns for operations</p>
+                    <a href="{{ url_for('campaigns.list_campaigns_route') }}" class="btn btn-primary">Manage Campaigns</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

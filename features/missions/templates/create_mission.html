@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{% if edit_mode %}Edit Mission{% else %}Create Mission{% endif %}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>{% if edit_mode %}Edit Mission{% else %}Create New Mission{% endif %}</h1>
+    
+    <form method="POST" class="mt-4" id="mission-form">
+        <div class="form-group">
+            <label for="campaign_id">Campaign</label>
+            <select class="form-control" id="campaign_id" name="campaign_id" required {% if edit_mode %}disabled{% endif %}>
+                <option value="">Select Campaign</option>
+                {% for campaign in campaigns %}
+                    <option value="{{ campaign.id }}" {% if mission and mission.campaign_id == campaign.id %}selected{% endif %}>
+                        {{ campaign.name }} ({{ campaign.shorthand }})
+                    </option>
+                {% endfor %}
+            </select>
+            <small id="mission_id_preview" class="form-text text-muted">
+                {% if mission_id_preview %}
+                Mission ID: {{ mission_id_preview }}
+                {% endif %}
+            </small>
+        </div>
+
+        {% if edit_mode %}
+        <div class="form-group">
+            <label for="name">Mission Name</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ mission.name }}" required>
+            <small class="form-text text-muted">Stylized display name (e.g., "PP15 | EX01")</small>
+        </div>
+        <input type="hidden" name="campaign_id" value="{{ mission.campaign_id }}">
+        {% endif %}
+        
+        <div class="form-group">
+            <label for="short_description">Short Description</label>
+            <input type="text" class="form-control" id="short_description" name="short_description" 
+                   value="{{ mission.short_description if mission else '' }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Full Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3">{{ mission.description if mission else '' }}</textarea>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="start_date_real">Date (IRL)</label>
+                <input type="date" class="form-control" id="start_date_real" name="start_date_real"
+                       value="{{ start_date_real if start_date_real else '' }}">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="start_time_real">Time (IRL)</label>
+                <input type="time" class="form-control" id="start_time_real" name="start_time_real"
+                       value="{{ start_time_real if start_time_real else '' }}">
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="start_date_ingame">Date (In-Game)</label>
+                <input type="date" class="form-control" id="start_date_ingame" name="start_date_ingame"
+                       value="{{ start_date_ingame if start_date_ingame else '' }}">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="start_time_ingame">Time (In-Game)</label>
+                <input type="time" class="form-control" id="start_time_ingame" name="start_time_ingame"
+                       value="{{ start_time_ingame if start_time_ingame else '' }}">
+            </div>
+        </div>
+        
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="flight_plan_easy_mode" name="flight_plan_easy_mode" 
+                   {% if mission and mission.flight_plan_easy_mode %}checked{% endif %}>
+            <label class="form-check-label" for="flight_plan_easy_mode">Enable Easy Mode for Flight Plans</label>
+            <small class="form-text text-muted">Simplifies the flight planning process</small>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">{{ 'Save Changes' if edit_mode else 'Create Mission' }}</button>
+        <a href="{{ url_for('missions.list_missions') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

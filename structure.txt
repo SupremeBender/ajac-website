@@ -1,0 +1,263 @@
+.
+├── config
+│   ├── aircraft.json
+│   ├── bases.json
+│   ├── frequencies.json
+│   ├── mission_types.json
+│   ├── navdata.json
+│   ├── operations_areas.json
+│   └── squadrons.json
+├── features
+│   ├── admin
+│   │   ├── static
+│   │   ├── templates
+│   │   ├── __init__.py
+│   │   └── routes.py
+│   ├── auth
+│   │   ├── static
+│   │   ├── templates
+│   │   ├── __init__.py
+│   │   └── routes.py
+│   ├── campaigns
+│   │   ├── templates
+│   │   │   ├── create_campaign.html
+│   │   │   └── list_campaigns.html
+│   │   ├── __init__.py
+│   │   └── routes.py
+│   ├── missions
+│   │   ├── static
+│   │   ├── templates
+│   │   │   ├── create_mission.html
+│   │   │   └── list_missions.html
+│   │   ├── __init__.py
+│   │   └── routes.py
+│   └── signup
+│       ├── static
+│       ├── templates
+│       │   ├── list_signup.html
+│       │   ├── signup_home.html
+│       │   └── signup_mission.html
+│       ├── __init__.py
+│       └── routes.py
+├── instance
+│   ├── campaigns
+│   │   ├── OPM25.json
+│   │   ├── PACT.json
+│   │   └── PP15.json
+│   ├── flask_session
+│   │   ├── 01adf394598676d37a584c06e42b752a
+│   │   ├── 03f18d105e576fb6fed4aeb32a635a2b
+│   │   ├── 05b18b18e0af05242cea3f1197b7279c
+│   │   ├── 06694760052c35ff80a613497f81538a
+│   │   ├── 08cc83ed4d188dbf3f8ab3980cf21daf
+│   │   ├── 0a9495dc9ea2067a498a632aaf329fa9
+│   │   ├── 0bc9c907a5e0d8404a4586b2dda08ead
+│   │   ├── 0e2e412e952202dd81d051a32636a813
+│   │   ├── 0e7d3efa46a1897a140dae92380993ea
+│   │   ├── 1073c7d684893e6345ed0d9c1580057a
+│   │   ├── 11839220571077cd0b074b9979e25f27
+│   │   ├── 14e23cad2cd88b0c79bc1aa15fb29695
+│   │   ├── 15614438cebae74decf79c6d7af0b53c
+│   │   ├── 1c462725388ae985d3d93e8d78561f5b
+│   │   ├── 1db5c05a1dd3389cbac5598057203217
+│   │   ├── 1f9123a40c778952932f7354e8e2e31c
+│   │   ├── 2029240f6d1128be89ddc32729463129
+│   │   ├── 2456c3bf4d6fdbd3bff5b71856d64ec4
+│   │   ├── 249d5280f945935b5556044fb82c7afa
+│   │   ├── 258e43dfb4cf02662eec41ff6291a047
+│   │   ├── 26e2f91698bae3c1aa971961078a87ee
+│   │   ├── 26e489467fa20291b1cbb5521fbb4416
+│   │   ├── 292ad00664b71abce4fa157a55539e2d
+│   │   ├── 29b83abbc4130e63829087aefb66a747
+│   │   ├── 2a5302bb0d56e6d55aebab7203ebfda4
+│   │   ├── 2c5dbd419c3e045a3ba9d1090eb07c26
+│   │   ├── 30d5738dbb1f0ee81529c57b7763049b
+│   │   ├── 360e729c4c4bfcc7a265786e117cf291
+│   │   ├── 363241ae066d9cdf75d436826576889d
+│   │   ├── 37c25951bc6d6bfcb5a30ae5f77b8520
+│   │   ├── 37e5b25c363b97e36919ffc39741e6a7
+│   │   ├── 38eecceee2551b87e1b50d06667f0a64
+│   │   ├── 3a0cd2b9288714dd3998f2fff5285ecd
+│   │   ├── 3c2c26ebd35e175704e3bd3437770de6
+│   │   ├── 3c901a83460da7e764ec7535ab892491
+│   │   ├── 3d56d0f8be1a3baa6b957465ff8c5d68
+│   │   ├── 3e554d875335772d11f34c475ac5030e
+│   │   ├── 3edb933a193595fdecd1199a06ffa06d
+│   │   ├── 3ee5bc0703c4253e0caf3cd57f8b28ea
+│   │   ├── 40b91a6935f18cf95965c2133ef98e52
+│   │   ├── 40c08132f13dd09094c0c62cf9f2e51b
+│   │   ├── 4427ecdfede0f776bc8b8f498a2fc0bc
+│   │   ├── 44f07192bd31e6522f92bd0a98fdc6e1
+│   │   ├── 45a943262b380017f341556fa1c3d1c8
+│   │   ├── 45bf44ccef6fa6494aa294e755fe0f5a
+│   │   ├── 45ce3b64467d638d3589ab37711ef05e
+│   │   ├── 4698a404ad29fca04a24b75d11ccd8c1
+│   │   ├── 498a9f23189a037918c1fa5092ca3146
+│   │   ├── 4ca706be0a6ce879e9bbb0ff0c54a03a
+│   │   ├── 4d527c70b6f92595fdea876eed864bab
+│   │   ├── 4e158e56fc59d01e0d2fe9ba6855d6e1
+│   │   ├── 4f58b134aa7c530b0d41885400cbe4a1
+│   │   ├── 50256a825c9a6c1d60a6cdda9d513bde
+│   │   ├── 5240d7e49f41a00140b4b4d7a78ef779
+│   │   ├── 53cd6a7c4e3fc3a4d35823c938aaf59b
+│   │   ├── 53f329475b32cd302d783a3b3057af8d
+│   │   ├── 547d76af9d2e970f3a6d90a3c966b127
+│   │   ├── 55a1e991d7dfc3d99ff7297dc9b23476
+│   │   ├── 5a8893f159eb70bf4bb71af0f6ff6aed
+│   │   ├── 5b5428b8a6cd585490825aa55e61d11e
+│   │   ├── 5e01d466e9cf86e0e650ec912a748301
+│   │   ├── 60852e10178476041d3a6b49ea87af8b
+│   │   ├── 6089a6db550622071f4c7f5d09aead2b
+│   │   ├── 60a6e09b4435212b6bf1c92439edc6b6
+│   │   ├── 612030e7c9bc661ee380c2c9947240d9
+│   │   ├── 62397a53630c639dfe103ad9f89c4bd0
+│   │   ├── 626f1e12fbb4cd9518de8b4fb9af1574
+│   │   ├── 63882ad96050534a341c55eebcbd9f64
+│   │   ├── 642c895f51abdd426edd20a1411a4587
+│   │   ├── 6789dadfffef8bc3886ce5437fce425f
+│   │   ├── 68b3f84903151d4d874c23ce5b842ecd
+│   │   ├── 6913fb5c7b09531e3d5831e4532baf15
+│   │   ├── 6a9bba494011f98a8aa7f8174fc8f3a0
+│   │   ├── 6be5d32a09da98b96a89b34ae349a150
+│   │   ├── 6dd0be13e7ba9d9771ecdabf11b18e97
+│   │   ├── 7076bc7eac43dfd7630ea4365aee93ec
+│   │   ├── 73e5da87dfb508c89e0d78c811b0f1ec
+│   │   ├── 743a99e409fba0b0a4acd51dde3f3678
+│   │   ├── 7af3ad5c250827f143978ec20f0c908e
+│   │   ├── 7b0593349abee5ced4b710df9bcfe27d
+│   │   ├── 7e7ef8a87c77155c52a1e6cd0663677f
+│   │   ├── 7f9bcd15d6bc8a9a0a67d43f2cde031c
+│   │   ├── 7feddc13181a4c494085d4666a2c58b1
+│   │   ├── 7fef21068b6e0bc3e6f7dbe68d198167
+│   │   ├── 819e9bc4e4449364d111fd23148b15d2
+│   │   ├── 81f22ec01207a9de6c2ec1b858e2de36
+│   │   ├── 85de03939658cd4ece62f8cb7dc04502
+│   │   ├── 8676d03ca48eaf933be357650854249c
+│   │   ├── 8ac7c92e1459eb7340b121a6a83792c8
+│   │   ├── 8bc049ec8fa8d0325e06790cc20a7ca8
+│   │   ├── 8cf0973e4f80d105b2b5ee1ff28869fc
+│   │   ├── 8daf5d9c32621fdafb82bcbd5dfa9616
+│   │   ├── 8ee45ece9d34604d6a378911d34d885a
+│   │   ├── 8ee8863f28991ac70d2552dd1f6da75e
+│   │   ├── 8f74d64d4e99e8d69b21e3b336d27465
+│   │   ├── 9137a101ff81a00e752657d5b04ed9e2
+│   │   ├── 916fb4eb94dd634d2e9b0f1b9b0780a7
+│   │   ├── 939c50da25e79ab69057671087f1cf88
+│   │   ├── 94616b49918ed214e53c3c7ab13cac5b
+│   │   ├── 954dd24c13f7bac5d88b5f623f7b26a9
+│   │   ├── 96cf048e0881533e7b1040854076a2df
+│   │   ├── 979bf9a5a6e3df4645adb8fd49528777
+│   │   ├── 97bbdc705a8bc387a6ab630e54e2d66b
+│   │   ├── 98a244ce1a8a581fefe231ee58908208
+│   │   ├── 9953400cb4aad4611063ec6a860abfbd
+│   │   ├── 9a93e4ac6fc93b31f4f60febf31542c9
+│   │   ├── 9af2739b433253bde53bd717a3fceb55
+│   │   ├── 9dacf0d26739f776f6662a229d85f518
+│   │   ├── 9effaf6f01b0f19771320c365695e8d3
+│   │   ├── a0f301670fb56d97706dbb2f0028efd2
+│   │   ├── a45e381211a8ea74a70c70306165f493
+│   │   ├── a53c9b0ab66951e077ed360a5a4d1f27
+│   │   ├── a5bf64b339d73384763cc5b9528b8e0a
+│   │   ├── a677176ae508b26c4ba2a95d91f5d06f
+│   │   ├── a87fe0dbc90fc2ac72198ddc7cbcf634
+│   │   ├── a914129797305e661023e08ada334c69
+│   │   ├── acc174d1b05d361f46c51a4b7b036e5d
+│   │   ├── ade8f6a89837099f8c2d2056bc2c9780
+│   │   ├── b3496c09ee68c79570d45c1f134150cc
+│   │   ├── b3bb611a992ff6ded2106ea990e2aee4
+│   │   ├── b45ff51384432c8ff9ff053602ec1968
+│   │   ├── b5f21c3a0b92e0f80da3aab2a1cc1969
+│   │   ├── b65a84316f1918c72fe9c5432405a602
+│   │   ├── b805d2308c950e7f9d2dc56023d5f49f
+│   │   ├── b8dfebd45bd2aba7de650e9a25aafb11
+│   │   ├── b9505aaddac64a544eb01609760d7a05
+│   │   ├── bae141caafb91809fde1f80e8a53f155
+│   │   ├── bc1eed815b8b60698dac38f05362f253
+│   │   ├── bcefe58afd677e3a9815ab58a42bbf85
+│   │   ├── c04b7de3b37ad47e06acbaaee574f13e
+│   │   ├── c6b55d087e6b62f68cd66c5f6fde1fd1
+│   │   ├── c72b5dfd0a54c24a8c679e130d1bb03d
+│   │   ├── c7961d961120de260195d921667f16c4
+│   │   ├── c79dd42dee17ed029b316a6f878b3dda
+│   │   ├── cb248e06b7c3fd06c5e4540b4580e7da
+│   │   ├── cc344c98da79dd55fb7f29e54fe4931e
+│   │   ├── ce29535d4de314a447e2a9edbb893190
+│   │   ├── ceeebf88ea080db23e5e1fd9611df039
+│   │   ├── d1503e3703186306ff98ae01dabe8033
+│   │   ├── d1a6d5215077fdca9b377caa51ae9d82
+│   │   ├── d3cd117c5e5d1e507f6a1efb2ef8814f
+│   │   ├── d3ee880440ee787f377e7db9998ac620
+│   │   ├── d44c56c7c7c912468a4ea78576700a68
+│   │   ├── d5ce4f9afb9246fc479f9d42845b0cf3
+│   │   ├── d6aa852a236a9d9a2d48e0ec3976fc6a
+│   │   ├── d77eaf943a6ad54e4fa945942dba17c3
+│   │   ├── d832e3491496596b0cdc4f851637026a
+│   │   ├── d845ebc3ef1f12c914a8dd6ea5d9d0bc
+│   │   ├── d97312a3c64ee1ec472cb44743a69cba
+│   │   ├── da16fb8974150518638a84f39bbd85e7
+│   │   ├── da2e2e2638c9cd6837d810937b7c56d4
+│   │   ├── db2f2b57667651674723845668101fae
+│   │   ├── dd1601baba3fbd51a0a32a3983a86983
+│   │   ├── dd32df31a6491475311ab045dea4daaa
+│   │   ├── dd92a898acb59073c1d93fb6cfb0ff14
+│   │   ├── deafcf10947581ff83c8868000d430e9
+│   │   ├── e0efae9820ae15ded7ddd92dab5e6842
+│   │   ├── e10e17d907b45bb4d19fe262ed2f7e50
+│   │   ├── e12d48e67726af7421363a21b946f335
+│   │   ├── e2711ff0ee1134314e0ab5760b87e0b3
+│   │   ├── e94efc7c115633ff5992f37914850c4b
+│   │   ├── ea719e6ce5c51839238342e35c96d778
+│   │   ├── eb6de3e3764a57dc4f519d8c28df0310
+│   │   ├── ededecea5fbe9caba33fd13dac7c9658
+│   │   ├── f01e07318c8bb17a1807f39ad6a3ee85
+│   │   ├── f1cf5d5c32c32e5cb782911bb136cef1
+│   │   ├── f206a5fe2dd92a25cbee542ab9fabc18
+│   │   ├── f20cda2b6bb11a4d04d913619e24f827
+│   │   ├── f34f507b68d7ce01a3388e5859d6a565
+│   │   ├── f3857bfecc40878da826845ed53ad376
+│   │   ├── f68ec8fa036f5517d31476b2807e1c2e
+│   │   ├── f7c857114fcda0fb08ac125414c4423e
+│   │   ├── f83fc4e331c204de2be59e57c5e5f367
+│   │   ├── f8b5af3b824b3f933686fa28608fe127
+│   │   ├── fca72f99b1fd9a7e532fa9deed213fbf
+│   │   └── ffeb786b4e24367552d386a817da67e9
+│   ├── logs
+│   │   └── app.log
+│   ├── missions
+│   │   ├── OPM25OP01.json
+│   │   ├── PACTOP01.json
+│   │   ├── PP15EX01.json
+│   │   ├── PP15EX02.json
+│   │   ├── PP15EX03.json
+│   │   ├── PP15EX04.json
+│   │   └── PP15EX05.json
+│   ├── beta_banner.txt
+│   ├── secret_config.py
+│   └── secret_config.py.example
+├── models
+│   └── flight.py
+├── static
+│   ├── css
+│   ├── images
+│   └── js
+├── templates
+│   ├── 404.html
+│   ├── 500.html
+│   ├── base.html
+│   ├── login.html
+│   └── root.html
+├── utils
+│   ├── auth.py
+│   ├── resources.py
+│   └── storage.py
+├── app.py
+├── config.py
+├── disc_bot.py
+├── LICENSE
+├── README.md
+├── requirements.txt
+├── start_all.sh
+├── structure.txt
+└── wsgi.py
+
+29 directories, 232 files

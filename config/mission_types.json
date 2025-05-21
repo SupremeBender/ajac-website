@@ -1,0 +1,35 @@
+{
+    "NONE": {
+        "transponder": "00"
+    },
+    "RECON": {
+        "transponder": "01"
+    },
+    "CSAR": {
+        "transponder": "02"
+    },
+    "CARGO": {
+        "transponder": "03"
+    },
+    "TANKER": {
+        "transponder": "04"
+    },
+    "AWACS": {
+        "transponder": "05"
+    },
+    "CAP": {
+        "transponder": "10"
+    },
+    "CAS": {
+        "transponder": "20"
+    },
+    "SEAD": {
+        "transponder": "21"
+    },
+    "STRIKE": {
+        "transponder": "22"
+    },
+    "HELI": {
+        "transponder": "30"
+    }
+}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error{% endblock %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+    <div class="card">
+        <div class="card-body">
+            <h1 class="display-1 text-muted">500</h1>
+            <h2>Server Error</h2>
+            <p class="lead">We apologize, but something went wrong on our end.</p>
+            <p>This could be due to a temporary server issue or an authentication problem.</p>
+            <div class="mt-4">
+                <a href="{{ url_for('root') }}" class="btn btn-primary mr-3">
+                    <i class="fas fa-home mr-2"></i> Return to Home
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Log Out and Try Again
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
