@@ -26,7 +26,6 @@ Thumbs.db
 logs/
 temp/
 uploads/
-(reference)/
 instance/
 !instance/*.example
 !instance/README.md
@@ -47,3 +46,4 @@ lib/
 lib64/venv/
 __pycache__/
 *.pyc
+.github/

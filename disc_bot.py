@@ -6,11 +6,14 @@ import sys
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-sys.path.insert(0, '/var/www/beta.ajac.no/instance')
+# Dynamically determine the instance directory based on the script's location
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+INSTANCE_DIR = os.path.join(BASE_DIR, "instance")
+sys.path.insert(0, INSTANCE_DIR)
 from instance import secret_config as config
 
 # Set up logging
-log_dir = os.path.join('/var/www/beta.ajac.no/instance/logs')
+log_dir = os.path.join(INSTANCE_DIR, "logs")
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, "bot.log")
 

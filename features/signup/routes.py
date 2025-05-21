@@ -140,7 +140,7 @@ def signup_mission(mission_id):
     operations_areas = get_operations_areas()
 
     # Load mission types from config/mission_types.json (fix path)
-    mission_types_path = '/var/www/beta.ajac.no/config/mission_types.json'
+    mission_types_path = os.path.join(current_app.root_path, "config", "mission_types.json")
     logger.info(f"[MISSION_TYPES] Using mission_types_path: {mission_types_path}")
     if not os.path.isfile(mission_types_path):
         logger.error(f"[MISSION_TYPES] File does not exist: {mission_types_path}")
