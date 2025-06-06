@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block content %}
+<main class="container" style="max-width: 600px; margin: 2rem auto;">
+  <section class="card" style="padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 1rem; background: var(--background, #222); color: var(--text, #fff);">
+    {% if edit %}
+      <h1>Edit Squadron: {{ squadron.name }}</h1>
+    {% else %}
+      <h1>Create New Squadron</h1>
+    {% endif %}
+    <a href="{{ url_for('admin.list_squadrons') }}" class="btn btn-secondary mb-3" aria-label="Back to squadron list">&larr; Back to Squadron List</a>
+
+    <form method="post" aria-label="Squadron form" autocomplete="off">
+      <div class="mb-3">
+        <label for="name" class="form-label">Squadron Name</label>
+        <input type="text" class="form-control" id="name" name="name" value="{{ squadron.name if squadron else '' }}" required aria-required="true">
+      </div>
+      <div class="mb-3">
+        <label for="aircraft_type" class="form-label">Aircraft Type</label>
+        <input type="text" class="form-control" id="aircraft_type" name="aircraft_type" value="{{ squadron.aircraft_type if squadron else '' }}" required aria-required="true">
+      </div>
+      <div class="mb-3">
+        <label for="tail_numbers" class="form-label">Tail Numbers (comma-separated)</label>
+        <input type="text" class="form-control" id="tail_numbers" name="tail_numbers" value="{{ tail_numbers_str if tail_numbers_str else '' }}" aria-describedby="tailHelp">
+        <div id="tailHelp" class="form-text">Example: 123, 456, 789</div>
+      </div>
+      <div class="mb-3">
+        <label for="callsigns" class="form-label">Callsigns (comma-separated)</label>
+        <input type="text" class="form-control" id="callsigns" name="callsigns" value="{{ callsigns_str if callsigns_str else '' }}" aria-describedby="callsignHelp">
+        <div id="callsignHelp" class="form-text">Example: Viking, Hammer</div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1.1em; background: #2a72d4; color: #fff; border: none; border-radius: 0.5rem;">{{ 'Update' if edit else 'Create' }} Squadron</button>
+    </form>
+
+    {% if edit %}
+      <hr>
+      <h2>Squadron Summary</h2>
+      <ul>
+        <li><strong>Name:</strong> {{ squadron.name }}</li>
+        <li><strong>Aircraft Type:</strong> {{ squadron.aircraft_type }}</li>
+        <li><strong>Tail Numbers:</strong> {{ tail_numbers_str }}</li>
+        <li><strong>Callsigns:</strong> {{ callsigns_str }}</li>
+      </ul>
+      </form> <!-- Close the main form before starting the delete form -->
+      <form action="{{ url_for('admin.delete_squadron', squadron_id=squadron_id) }}" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-danger" aria-label="Delete Squadron" style="width: 100%; padding: 0.75rem; font-size: 1.1em; background: #a33; color: #fff; border: none; border-radius: 0.5rem;" onclick="return confirm('Are you sure you want to delete this squadron?');">Delete</button>
+      </form>
+    {% endif %}
+
+    {# Flash messages for all actions, ARIA roles for accessibility #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div role="alert" aria-live="polite" style="margin-top: 1.5rem;">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" tabindex="0">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </section>
+</main>
+<script>
+function addTail() {
+  const div = document.createElement('div');
+  div.className = 'tail-entry';
+  div.style = 'display: flex; gap: 0.5rem; margin-bottom: 0.5rem;';
+  div.innerHTML = `<input type="text" name="tail[]" placeholder="Tail Number" aria-label="Tail Number" class="form-control" style="flex: 1;">
+    <button type="button" onclick="removeTail(this)" aria-label="Remove Tail" class="btn btn-danger" style="background: #a33; color: #fff; border: none; border-radius: 0.3rem;">Remove</button>`;
+  document.getElementById('tail-list').appendChild(div);
+}
+function removeTail(btn) {
+  btn.parentElement.remove();
+}
+</script>
+{% endblock %}

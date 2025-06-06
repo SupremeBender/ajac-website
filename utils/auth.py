@@ -35,3 +35,20 @@ def login_required(f):
         logger.debug(f"User {session.get('username', 'unknown')} is authenticated, proceeding to {request.path}")
         return f(*args, **kwargs)
     return decorated_function
+
+def admin_required(f):
+    """
+    Custom decorator to require admin privileges for routes.
+    If user is not admin, redirects to login or shows unauthorized message.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        logger.debug(f"Checking admin for {request.path}")
+        is_admin = session.get('is_admin', False)
+        if not is_admin:
+            logger.warning(f"Unauthorized admin access attempt to {request.path}")
+            flash("You do not have permission to access this page.", "danger")
+            return redirect(url_for('root'))
+        logger.debug(f"User {session.get('username', 'unknown')} is admin, proceeding to {request.path}")
+        return f(*args, **kwargs)
+    return decorated_function

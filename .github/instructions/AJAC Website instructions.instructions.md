@@ -15,6 +15,8 @@ This project is a **Flask app with an HTML frontend** for our **DCS (Digital Com
 * The user is still learning to code — explain what you are doing in clear terms.
 * Avoid deleting or refactoring large chunks of code unless you are 100% sure of the implications and have been explicitly cleared to do so.
 * Keep the codebase **clean** and **readable**, but avoid unnecessary abstraction.
+* Do not create code for migrating old formats or to keep backwards compatibility unless explictily told to.
+* Do not create fallbacks or other autoamtic contingencies and hardcoded backups that hide the real issue. If soemthing is not workign as intended it has to be obvious.
 
 ---
 
@@ -45,7 +47,6 @@ project-root/
 ├── tests/                # Test cases (unit/integration)
 ├── logs/                 # Log files
 ├── docs/                 # Markdown documentation and structure.txt
-├── start_all.sh          # Systemd/Apache startup script
 ├── wsgi.py               # Apache WSGI entry point
 ├── disc_bot.py           # Discord integration script (if used)
 ├── config.py             # App config

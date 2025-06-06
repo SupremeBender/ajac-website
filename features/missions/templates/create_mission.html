@@ -10,7 +10,7 @@
             <select class="form-control" id="campaign_id" name="campaign_id" required {% if edit_mode %}disabled{% endif %}>
                 <option value="">Select Campaign</option>
                 {% for campaign in campaigns %}
-                    <option value="{{ campaign.id }}" {% if mission and mission.campaign_id == campaign.id %}selected{% endif %}>
+                    <option value="{{ campaign.id }}" data-type="{{ campaign.type }}" {% if mission and mission.campaign_id == campaign.id %}selected{% endif %}>
                         {{ campaign.name }} ({{ campaign.shorthand }})
                     </option>
                 {% endfor %}
@@ -20,6 +20,12 @@
                 Mission ID: {{ mission_id_preview }}
                 {% endif %}
             </small>
+            <div id="campaign-type-description" class="mt-2 text-info" style="font-size:0.97em;"></div>
+            <div id="campaign-type-descriptions" style="display:none;">
+                <div data-type="OP"><strong>OP (Operation):</strong> Real operations with specific objectives and targets. For full-on conflict/war scenarios.</div>
+                <div data-type="EX"><strong>EX (Exercise):</strong> Major exercises that simulate operations. Structured, but not real conflict.</div>
+                <div data-type="TR"><strong>TR (Training):</strong> Ongoing training campaigns with open range days. Pilots select an exercise area and scenario to practice in.</div>
+            </div>
         </div>
 
         {% if edit_mode %}
@@ -75,8 +81,411 @@
             <small class="form-text text-muted">Simplifies the flight planning process</small>
         </div>
         
+        <!-- Curated Flight Slots Section (improved UX - collapsible) -->
+        <div class="form-group mt-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <label class="font-weight-bold">Advanced Mission Setup</label>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="collapse" data-target="#advanced-section" aria-expanded="false" aria-controls="advanced-section">
+                    <span class="when-collapsed">+ Show Advanced Options</span>
+                    <span class="when-expanded">- Hide Advanced Options</span>
+                </button>
+            </div>
+            <p class="text-muted">Configure curated flight slots and advanced mission settings (optional)</p>
+            
+            <div class="collapse" id="advanced-section">
+                <div class="card card-body mt-3">
+                    <h5>Curated Flight Slots</h5>
+                    <p class="text-muted">Define specific flight slots for this mission. Each slot can have a label, role, allowed squadrons, number of seats, and a description. <strong>Leave empty to use only open flights.</strong></p>
+                    <div id="curated-slots-section" aria-label="Curated Flight Slots">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <label for="slot-label-input">Callsign</label>
+                                <input type="text" id="slot-label-input" class="form-control" maxlength="24" placeholder="e.g. Chevy 1" aria-label="Slot Callsign">
+                                <div class="form-check mt-1">
+                                    <input type="checkbox" class="form-check-input" id="slot-use-squadron-callsigns">
+                                    <label class="form-check-label" for="slot-use-squadron-callsigns">Use squadron callsigns</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="slot-role-input">Mission Type</label>
+                                <select id="slot-role-input" class="form-control" aria-label="Mission Type">
+                                    <option value="">Select type</option>
+                                    {% for mission_type, details in mission_types.items() %}
+                                    <option value="{{ mission_type }}" data-transponder="{{ details.transponder }}">{{ mission_type }} ({{ details.transponder }})</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted" id="transponder-info"></small>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Allowed Squadrons</label>
+                                <div id="slot-squadrons-checkboxes" class="form-control" style="height:auto; min-height:38px; padding:0.5rem; overflow-y:auto;">
+                                    <!-- JS will populate checkboxes -->
+                                    <span id="no-squadrons-msg" style="display:none; color:#888;">No squadrons available for this campaign.</span>
+                                </div>
+                                <small class="form-text text-muted">Check one or more squadrons</small>
+                            </div>
+                            <div class="col-md-1">
+                                <label for="slot-seats-input">Seats</label>
+                                <input type="number" id="slot-seats-input" class="form-control" min="1" max="8" value="2" aria-label="Seats">
+                                <small class="form-text text-muted">Flight capacity (including lead)</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="slot-desc-input">Description</label>
+                                <input type="text" id="slot-desc-input" class="form-control" maxlength="64" placeholder="e.g. DEAD, 2x F-16, AGM-88" aria-label="Slot Description">
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="btn btn-success w-100" id="add-slot-btn" aria-label="Add Slot">Add</button>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <table class="table table-sm table-bordered" id="curated-slots-table" aria-label="Current Curated Slots">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Callsign</th>
+                                        <th>Mission Type</th>
+                                        <th>Allowed Squadrons</th>
+                                        <th>Seats</th>
+                                        <th>Description</th>
+                                        <th>Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- JS will populate rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Hidden input to store slots as JSON for backend -->
+                        <input type="hidden" name="curated_slots" id="curated-slots-json">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Allow open flights checkbox - moved to main form area -->
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="allow_open_flights" name="allow_open_flights" checked
+                   {% if mission and mission.allow_open_flights %}checked{% endif %}>
+            <label class="form-check-label" for="allow_open_flights">Allow open flights (users can create their own flights)</label>
+            <small class="form-text text-muted">Recommended: Allows pilots to create flexible flight compositions. Disable only if using curated slots exclusively.</small>
+        </div>
+
         <button type="submit" class="btn btn-primary">{{ 'Save Changes' if edit_mode else 'Create Mission' }}</button>
         <a href="{{ url_for('missions.list_missions') }}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+
+{% if edit_mode and mission and mission.curated_slots %}
+<script type="text/javascript">
+// Initialize curated slots from mission data
+window['initialCuratedSlots'] = JSON.parse('{{ mission.curated_slots|tojson|safe }}');
+</script>
+{% endif %}
+
+<script type="text/javascript">
+// Initialize squadrons data and curated slots functionality
+const squadrons = JSON.parse('{{ squadrons|tojson|safe }}');
+const missionTypes = JSON.parse('{{ mission_types|tojson|safe }}');
+
+// --- Curated Flight Slots JS (enhanced for both legacy and template squadron formats) ---
+let curatedSlots = [];
+let squadronsList = [];
+
+// Convert squadrons to consistent array format for frontend
+if (Array.isArray(squadrons)) {
+    // New template format: already an array
+    squadronsList = squadrons;
+} else if (squadrons && typeof squadrons === 'object') {
+    // Legacy format: convert object to array
+    squadronsList = Object.keys(squadrons).map(id => ({
+        id: id,
+        name: squadrons[id].name || id
+    }));
+} else {
+    squadronsList = [];
+}
+
+function renderSquadronCheckboxes(containerEl, selected=[]) {
+    containerEl.innerHTML = '';
+    if (!Array.isArray(squadronsList) || squadronsList.length === 0) {
+        // Show message if no squadrons available
+        const msg = document.createElement('span');
+        msg.style.color = '#888';
+        msg.textContent = 'No squadrons available for this campaign.';
+        containerEl.appendChild(msg);
+        return;
+    }
+    squadronsList.forEach(sq => {
+        const label = document.createElement('label');
+        label.className = 'mr-2';
+        label.style.display = 'inline-block';
+        label.style.marginRight = '1rem';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = sq.id;
+        checkbox.name = 'slot-squadrons';
+        checkbox.ariaLabel = sq.name || sq.id;
+        // Check if this squadron ID is in the selected array
+        if (selected.includes(sq.id)) checkbox.checked = true;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + (sq.name || sq.id)));
+        containerEl.appendChild(label);
+    });
+    console.log('[DEBUG] Rendered squadron checkboxes. Current squadronsList:', squadronsList);
+}
+
+function getCheckedSquadrons() {
+    return Array.from(document.querySelectorAll('#slot-squadrons-checkboxes input[type="checkbox"]:checked')).map(cb => cb.value);
+}
+
+function updateCuratedSlotsTable() {
+    const tbody = document.querySelector('#curated-slots-table tbody');
+    tbody.innerHTML = '';
+    curatedSlots.forEach((slot, idx) => {
+        const tr = document.createElement('tr');
+        // Map squadron IDs to names using the array
+        const allowedNames = slot.squadrons.map(sq_id => {
+            const sq = squadronsList.find(s => String(s.id) === String(sq_id));
+            return sq ? sq.name : sq_id;
+        });
+        
+        // Determine callsign display based on useSquadronCallsigns flag
+        let callsignDisplay = '';
+        if (slot.useSquadronCallsigns) {
+            callsignDisplay = `<span class="text-primary"><i>Using squadron callsigns</i></span>`;
+            if (slot.label) {
+                callsignDisplay += ` (${slot.label})`;
+            }
+        } else {
+            callsignDisplay = slot.label;
+        }
+            
+        tr.innerHTML = `
+            <td>${callsignDisplay}</td>
+            <td>${slot.role}</td>
+            <td>${allowedNames.join(', ')}</td>
+            <td>${slot.seats}</td>
+            <td>${slot.description}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-primary mr-1" aria-label="Edit Slot" onclick="editCuratedSlot(${idx})">✎</button>
+                <button type="button" class="btn btn-sm btn-danger" aria-label="Remove Slot" onclick="removeCuratedSlot(${idx})">&times;</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    document.getElementById('curated-slots-json').value = JSON.stringify(curatedSlots);
+}
+
+function addCuratedSlot() {
+    const label = document.getElementById('slot-label-input').value.trim();
+    const role = document.getElementById('slot-role-input').value;
+    const squadrons = getCheckedSquadrons();
+    const seats = parseInt(document.getElementById('slot-seats-input').value, 10) || 1;
+    const description = document.getElementById('slot-desc-input').value.trim();
+    const useSquadronCallsigns = document.getElementById('slot-use-squadron-callsigns').checked;
+    
+    // Validate inputs - callsign is only required if not using squadron callsigns
+    if ((!label && !useSquadronCallsigns) || !role || squadrons.length === 0 || seats < 1) {
+        let errorMessage = 'Please fill in all required fields for the slot: ';
+        if (!role) errorMessage += 'mission type, ';
+        if (!label && !useSquadronCallsigns) errorMessage += 'callsign, ';
+        if (squadrons.length === 0) errorMessage += 'at least one squadron, ';
+        if (seats < 1) errorMessage += 'seats, ';
+        errorMessage = errorMessage.slice(0, -2) + '.'; // Remove trailing comma and space
+        
+        alert(errorMessage);
+        return;
+    }
+    
+    curatedSlots.push({ 
+        label: useSquadronCallsigns ? '' : label, // If using squadron callsigns, we can store empty string
+        role, 
+        squadrons, 
+        seats, 
+        description,
+        useSquadronCallsigns
+    });
+    updateCuratedSlotsTable();
+    // Clear inputs
+    document.getElementById('slot-label-input').value = '';
+    document.getElementById('slot-role-input').value = '';
+    document.getElementById('slot-use-squadron-callsigns').checked = false;
+    renderSquadronCheckboxes(document.getElementById('slot-squadrons-checkboxes'));
+    document.getElementById('slot-seats-input').value = 1;
+    document.getElementById('slot-desc-input').value = '';
+}
+
+function removeCuratedSlot(idx) {
+    curatedSlots.splice(idx, 1);
+    updateCuratedSlotsTable();
+}
+
+function editCuratedSlot(idx) {
+    const slot = curatedSlots[idx];
+    // Populate the form fields with the slot data
+    document.getElementById('slot-label-input').value = slot.label || '';
+    document.getElementById('slot-role-input').value = slot.role;
+    document.getElementById('slot-seats-input').value = slot.seats;
+    document.getElementById('slot-desc-input').value = slot.description;
+    
+    // Set the use squadron callsigns checkbox and trigger its change event
+    const useSquadronCallsignsCheckbox = document.getElementById('slot-use-squadron-callsigns');
+    useSquadronCallsignsCheckbox.checked = !!slot.useSquadronCallsigns;
+    
+    // Manually trigger the change event to update the UI
+    const event = new Event('change');
+    useSquadronCallsignsCheckbox.dispatchEvent(event);
+    
+    // Render squadron checkboxes with the selected squadrons
+    renderSquadronCheckboxes(document.getElementById('slot-squadrons-checkboxes'), slot.squadrons);
+    
+    // Remove the slot from the array
+    removeCuratedSlot(idx);
+    
+    // Scroll to the form
+    document.getElementById('slot-label-input').scrollIntoView({ behavior: 'smooth' });
+}
+
+// On page load, populate squadron checkboxes and restore slots if editing
+if (document.getElementById('slot-squadrons-checkboxes')) {
+    renderSquadronCheckboxes(document.getElementById('slot-squadrons-checkboxes'));
+    document.getElementById('add-slot-btn').addEventListener('click', addCuratedSlot);
+    // If editing, restore slots from backend (if present)
+    const initialSlots = window.initialCuratedSlots || [];
+    if (Array.isArray(initialSlots) && initialSlots.length > 0) {
+        // Convert old format to new format if needed
+        initialSlots.forEach(slot => {
+            // Add useSquadronCallsigns property if not present
+            if (typeof slot.useSquadronCallsigns === 'undefined') {
+                slot.useSquadronCallsigns = false;
+            }
+            curatedSlots.push(slot);
+        });
+        updateCuratedSlotsTable();
+    }
+}
+
+// When campaign changes, submit the form with GET and preserve all fields
+const campaignSelect = document.getElementById('campaign_id');
+if (campaignSelect) {
+    campaignSelect.addEventListener('change', function() {
+        const campaignId = this.value;
+        console.log('[DEBUG] Campaign dropdown changed. Selected campaignId:', campaignId);
+        // Fetch squadrons for the selected campaign via AJAX
+        fetch(`/missions/get_squadrons_for_campaign?campaign_id=${encodeURIComponent(campaignId)}`)
+            .then(response => {
+                console.log('[DEBUG] AJAX response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('[DEBUG] AJAX squadron data:', data);
+                // Update the global squadrons variable and re-render checkboxes
+                window.squadrons = data;
+                
+                // Convert object format to array format for squadronsList
+                if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    // Convert enhanced squadron object to array format
+                    squadronsList = Object.keys(data).map(id => ({
+                        id: id,
+                        name: data[id].name || id,
+                        aircraft_type: data[id].aircraft_type,
+                        base: data[id].base,
+                        callsigns: data[id].callsigns,
+                        tail_numbers: data[id].tail_numbers
+                    }));
+                } else if (Array.isArray(data)) {
+                    squadronsList = data;
+                } else {
+                    squadronsList = [];
+                }
+                
+                renderSquadronCheckboxes(document.getElementById('slot-squadrons-checkboxes'));
+                console.log('[DEBUG] Called renderSquadronCheckboxes with squadronsList:', squadronsList);
+            })
+            .catch(err => {
+                console.error('[ERROR] Failed to fetch squadrons for campaign:', err);
+                // Show error in the UI if needed
+                const container = document.getElementById('slot-squadrons-checkboxes');
+                container.innerHTML = '<span style="color:#c00">Failed to load squadrons for this campaign.</span>';
+            });
+    });
+}
+
+// Toggle callsign field requirements based on squadron callsigns checkbox
+document.getElementById('slot-use-squadron-callsigns').addEventListener('change', function() {
+    const callsignInput = document.getElementById('slot-label-input');
+    const callsignLabel = callsignInput.previousElementSibling;
+    
+    if (this.checked) {
+        // Squadron callsigns selected, callsign is optional
+        callsignInput.placeholder = "Optional override";
+        callsignLabel.textContent = "Callsign (optional)";
+        callsignInput.classList.add('bg-light');
+    } else {
+        // Squadron callsigns not selected, callsign is required
+        callsignInput.placeholder = "e.g. Chevy 1";
+        callsignLabel.textContent = "Callsign";
+        callsignInput.classList.remove('bg-light');
+    }
+});
+
+// Show transponder info when mission type selected
+document.getElementById('slot-role-input').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const transponderInfo = document.getElementById('transponder-info');
+    
+    if (selectedOption.value) {
+        const transponderCode = selectedOption.getAttribute('data-transponder');
+        transponderInfo.textContent = `Transponder: ${transponderCode}`;
+    } else {
+        transponderInfo.textContent = '';
+    }
+});
+
+// Handle collapsible advanced section
+document.addEventListener('DOMContentLoaded', function() {
+    const advancedSection = document.getElementById('advanced-section');
+    const toggleButton = document.querySelector('[data-target="#advanced-section"]');
+    
+    if (advancedSection && toggleButton) {
+        advancedSection.addEventListener('show.bs.collapse', function () {
+            toggleButton.querySelector('.when-collapsed').style.display = 'none';
+            toggleButton.querySelector('.when-expanded').style.display = 'inline';
+        });
+        
+        advancedSection.addEventListener('hide.bs.collapse', function () {
+            toggleButton.querySelector('.when-collapsed').style.display = 'inline';
+            toggleButton.querySelector('.when-expanded').style.display = 'none';
+        });
+    }
+});
+
+// Campaign type description logic
+document.addEventListener('DOMContentLoaded', function() {
+    const campaignSelect = document.getElementById('campaign_id');
+    const descBox = document.getElementById('campaign-type-description');
+    const descs = document.getElementById('campaign-type-descriptions').children;
+    function updateDesc() {
+        let selected = campaignSelect.options[campaignSelect.selectedIndex];
+        let type = selected ? selected.getAttribute('data-type') : null;
+        let found = false;
+        for (let d of descs) {
+            if (d.getAttribute('data-type') === type) {
+                descBox.innerHTML = d.innerHTML;
+                found = true;
+                break;
+            }
+        }
+        if (!found) descBox.innerHTML = '';
+    }
+    campaignSelect.addEventListener('change', updateDesc);
+    updateDesc(); // Initial
+});
+</script>
+
+<style>
+.when-expanded {
+    display: none;
+}
+</style>
+<!-- End Curated Flight Slots Section -->
 {% endblock %}

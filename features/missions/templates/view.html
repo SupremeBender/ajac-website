@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}{{ mission.name }} - Mission Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>{{ mission.name }}</h1>
+                <div>
+                    <a href="{{ url_for('missions.edit_mission', mission_id=mission.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit Mission
+                    </a>
+                    <a href="{{ url_for('missions.list_missions') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Missions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mission Information -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Mission Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Mission ID:</strong> {{ mission.id }}</p>
+                            <p><strong>Campaign:</strong> {{ mission.campaign_id or "No campaign assigned" }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge badge-{{ 'success' if mission.status == 'active' else 'secondary' }}">
+                                    {{ mission.status|title }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if mission.time_real %}
+                            <p><strong>Real Time:</strong> {{ mission.time_real.replace('T', ' ') }}</p>
+                            {% endif %}
+                            {% if mission.time_ingame %}
+                            <p><strong>In-game Time:</strong> {{ mission.time_ingame.replace('T', ' ') }}</p>
+                            {% endif %}
+                            <p><strong>Easy Flight Planning:</strong> 
+                                <span class="badge badge-{{ 'success' if mission.flight_plan_easy_mode else 'secondary' }}">
+                                    {{ 'Enabled' if mission.flight_plan_easy_mode else 'Disabled' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if mission.short_description %}
+                    <div class="mt-3">
+                        <strong>Short Description:</strong>
+                        <p class="text-muted">{{ mission.short_description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if mission.description %}
+                    <div class="mt-3">
+                        <strong>Description:</strong>
+                        <div class="text-muted">{{ mission.description|nl2br|safe }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Mission Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Available Slots:</strong> {{ mission.curated_slots|length if mission.curated_slots else 0 }}</p>
+                    <p><strong>Active Flights:</strong> {{ mission.flights|length if mission.flights else 0 }}</p>
+                    <p><strong>Open Flights Allowed:</strong> 
+                        <span class="badge badge-{{ 'success' if mission.allow_open_flights else 'secondary' }}">
+                            {{ 'Yes' if mission.allow_open_flights else 'No' }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Curated Slots Section -->
+    {% if mission.curated_slots and mission.curated_slots|length > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-plane"></i> Available Curated Slots ({{ mission.curated_slots|length }})</h5>
+                    <small class="text-muted">Claim a slot to become the flight lead and convert it into an active flight</small>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for slot in mission.curated_slots %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-left-primary h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-fighter-jet"></i> {{ slot.label }}
+                                    </h6>
+                                    <p class="card-text small">
+                                        <strong>Role:</strong> {{ slot.role }}<br>
+                                        <strong>Squadrons:</strong> {{ slot.squadrons|join(', ') }}<br>
+                                        <strong>Seats:</strong> {{ slot.seats }}<br>
+                                        {% if slot.description %}
+                                        <strong>Description:</strong> {{ slot.description }}
+                                        {% endif %}
+                                    </p>
+                                    
+                                    <!-- Claim Button with Modal Trigger -->
+                                    <button type="button" class="btn btn-primary btn-sm" 
+                                            data-toggle="modal" 
+                                            data-target="#claimModal{{ loop.index0 }}"
+                                            aria-label="Claim slot {{ slot.label }}">
+                                        <i class="fas fa-hand-paper"></i> Claim Slot
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Claim Modal for this slot -->
+                        <div class="modal fade" id="claimModal{{ loop.index0 }}" tabindex="-1" role="dialog" 
+                             aria-labelledby="claimModalLabel{{ loop.index0 }}" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="claimModalLabel{{ loop.index0 }}">
+                                            Claim Slot: {{ slot.label }}
+                                        </h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('missions.claim_curated_slot', mission_id=mission.id, slot_index=loop.index0) }}">
+                                        <div class="modal-body">
+                                            <div class="form-group">
+                                                <label for="flight_name{{ loop.index0 }}">Flight Name:</label>
+                                                <input type="text" class="form-control" 
+                                                       id="flight_name{{ loop.index0 }}" 
+                                                       name="flight_name" 
+                                                       value="{{ slot.label }}" 
+                                                       required
+                                                       aria-describedby="flight_name_help{{ loop.index0 }}">
+                                                <small id="flight_name_help{{ loop.index0 }}" class="form-text text-muted">
+                                                    This will be the name of your flight once claimed.
+                                                </small>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="description{{ loop.index0 }}">Flight Description (Optional):</label>
+                                                <textarea class="form-control" 
+                                                          id="description{{ loop.index0 }}" 
+                                                          name="description" 
+                                                          rows="3"
+                                                          aria-describedby="description_help{{ loop.index0 }}"
+                                                          placeholder="Add any additional notes about your flight..."></textarea>
+                                                <small id="description_help{{ loop.index0 }}" class="form-text text-muted">
+                                                    Optional description for your flight plans or objectives.
+                                                </small>
+                                            </div>
+                                            
+                                            <div class="alert alert-info">
+                                                <strong><i class="fas fa-info-circle"></i> Claiming this slot will:</strong>
+                                                <ul class="mb-0 mt-2">
+                                                    <li>Make you the flight lead</li>
+                                                    <li>Add you as the first member</li>
+                                                    <li>Convert this template into an active flight</li>
+                                                    <li>Remove it from available slots</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-hand-paper"></i> Claim Slot
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Active Flights Section -->
+    {% if mission.flights and mission.flights|length > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Active Flights ({{ mission.flights|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for flight_id, flight in mission.flights.items() %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-left-success h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-plane"></i> {{ flight.name or flight.callsign }}
+                                    </h6>
+                                    <p class="card-text small">
+                                        <strong>Callsign:</strong> {{ flight.callsign }}<br>
+                                        {% if flight.squadron %}
+                                        <strong>Squadron:</strong> {{ flight.squadron }}<br>
+                                        {% endif %}
+                                        {% if flight.role %}
+                                        <strong>Role:</strong> {{ flight.role }}<br>
+                                        {% endif %}
+                                        {% if flight.lead %}
+                                        <strong>Lead:</strong> {{ flight.lead }}<br>
+                                        {% endif %}
+                                        {% if flight.members %}
+                                        <strong>Members:</strong> {{ flight.members|length }}/{{ flight.max_pilots or 1 }}
+                                        {% endif %}
+                                    </p>
+                                    
+                                    {% if flight.description or flight.original_slot_description %}
+                                    <p class="card-text small text-muted">{{ flight.description or flight.original_slot_description }}</p>
+                                    {% endif %}
+                                    
+                                    <div class="mt-2">
+                                        <span class="badge badge-success">Active</span>
+                                        {% if flight.claimed_from_slot is defined %}
+                                        <span class="badge badge-info">Claimed from Slot</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if (not mission.curated_slots or mission.curated_slots|length == 0) and (not mission.flights or mission.flights|length == 0) %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-plane-slash fa-3x text-muted mb-3"></i>
+                    <h4>No Flights Available</h4>
+                    <p class="text-muted">This mission doesn't have any curated slots or active flights yet.</p>
+                    {% if mission.allow_open_flights %}
+                    <p class="text-muted">Open flights are allowed for this mission.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

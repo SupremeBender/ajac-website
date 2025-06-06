@@ -2,190 +2,12 @@
 {% block title %}{{ mission.name }} - Signup{% endblock %}
 
 {% block styles %}
-<style>
-    /* Flight group styling */
-    .flight-group {
-        border: 1px solid var(--card-border);
-        border-radius: 6px;
-        margin-bottom: 2.2rem;
-        overflow: hidden;
-        background-color: var(--card-bg);
-    }
-    
-    .flight-collapsed-row {
-        display: flex;
-        align-items: center;
-        gap: 22px;
-        padding: 18px 24px;
-        cursor: pointer;
-        transition: background-color 0.2s, box-shadow 0.2s;
-        font-size: 1.08em;
-    }
-    .flight-collapsed-row span {
-        font-size: 1em;
-    }
-    .flight-collapsed-row span:first-child {
-        font-size: 1.18em;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-    }
-    .flight-collapsed-row span:nth-child(2),
-    .flight-collapsed-row span:nth-child(3) {
-        font-weight: 500;
-    }
-    
-    .flight-collapsed-row:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-    }
-    
-    .flight-collapsed-remarks {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 150px;
-        opacity: 0.7;
-    }
-    
-    .flight-collapsed-members {
-        background-color: var(--primary-color);
-        border-radius: 4px;
-        padding: 3px 8px;
-        font-size: 0.8em;
-    }
-    
-    .flight-collapsed-status {
-        padding: 3px 8px;
-        border-radius: 4px;
-        font-size: 0.8em;
-        font-weight: 500;
-    }
-    
-    .flight-collapsed-status.OPEN {
-        background-color: #28a745;
-        color: white;
-    }
-    
-    .flight-collapsed-status.LOCKED {
-        background-color: #dc3545;
-        color: white;
-    }
-
-    /* Join button styling */
-    .join-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 15px;
-    }
-    
-    .cross-base-warning {
-        padding: 8px;
-        border-radius: 4px;
-        background-color: rgba(255, 193, 7, 0.1);
-        border: 1px solid rgba(255, 193, 7, 0.2);
-    }
-    
-    /* Form controls - enhance for dark theme */
-    select.form-control, 
-    input.form-control {
-        background-color: rgba(255,255,255,0.1);
-        border: 1px solid var(--card-border);
-        color: var(--text-color);
-    }
-    
-    /* Hide debug elements for production */
-    #debug-aircraft-data-json {
-        display: none;
-    }
-    
-    /* Animation for triangle expand/collapse */
-    .flight-group.collapsed .triangle {
-        transform: rotate(-90deg);
-    }
-    
-    /* Join form styling */
-    .join-flight-form {
-        background-color: rgba(0,0,0,0.2);
-        border-radius: 6px;
-        padding: 15px;
-        margin-top: 10px;
-        border: 1px solid var(--card-border);
-    }
-
-    /* Flight card shadow and spacing improvements */
-    .flight-card {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        margin-bottom: 2rem;
-        border-radius: 10px;
-        transition: box-shadow 0.2s;
-    }
-    .flight-card:hover {
-        box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-    }
-    .flight-expanded-content {
-        padding: 32px 32px 18px 32px !important;
-        background: var(--card-bg);
-    }
-
-    /* Flight create panel (right column) styling */
-    .flight-create-panel {
-        background: var(--card-bg, #23272b);
-        border: 1px solid var(--card-border, #444);
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        padding: 24px 20px 20px 20px;
-        margin-bottom: 0;
-    }
-    .flight-create-panel h4 {
-        color: var(--primary-color, #5d9cec);
-        font-size: 1.2em;
-        margin-bottom: 1.2em;
-        font-weight: 600;
-    }
-    .flight-create-panel .form-group label {
-        color: #b8b8b8;
-        font-weight: 500;
-    }
-    .flight-create-panel .form-control {
-        background-color: rgba(255,255,255,0.07);
-        border: 1px solid var(--card-border, #444);
-        color: var(--text-color, #e0e0e0);
-    }
-    .flight-create-panel .btn-primary {
-        background: var(--primary-color, #5d9cec);
-        border: none;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        transition: background 0.2s;
-    }
-    .flight-create-panel .btn-primary:hover {
-        background: #4a87d8;
-    }
-    @media (max-width: 991.98px) {
-        .flight-create-panel {
-            margin-top: 32px;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/signup_mission.css') }}">
 {% endblock %}
 
 {% block content %}
-{% if aircraft_data is defined and aircraft_data %}
-<script type="text/javascript">
-window.aircraftData = JSON.parse('{{ aircraft_data | tojson | safe }}');
-window.basesData = JSON.parse('{{ bases | tojson | safe }}');
-var persistentAcLocation = JSON.parse('{{ persistent_ac_location | default(false, true) | tojson | safe }}');
-var missionId = JSON.parse('{{ mission.id | default("null", true) | tojson | safe }}');
-</script>
+<div id="signup-root" data-campaign-id="{{ campaign_id }}" data-persistent-ac-location="{{ persistent_ac_location|default(false, true) }}"></div>
 <pre id="debug-aircraft-data-json" style="display:none;">{{ aircraft_data | tojson }}</pre>
-{% else %}
-<script type="text/javascript">
-window.aircraftData = {};
-window.basesData = {};
-var persistentAcLocation = false;
-var missionId = null;
-</script>
-{% endif %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Mission Signup</h1>
@@ -212,9 +34,19 @@ var missionId = null;
                                 <label for="squadron">Squadron</label>
                                 <select class="form-control" id="squadron" name="squadron" required>
                                     <option value="">Select squadron</option>
-                                    {% for sq_id, sq in squadrons.items() %}
-                                    <option value="{{ sq_id }}">{{ sq_id }}</option>
-                                    {% endfor %}
+                                    {% if squadrons %}
+                                        {% if squadrons is mapping %}
+                                            {# Legacy format: dict with squadron_id: squadron_data #}
+                                            {% for sq_id, sq in squadrons.items() %}
+                                            <option value="{{ sq_id }}">{{ sq_id }} - {{ sq.get('name', sq_id) }}</option>
+                                            {% endfor %}
+                                        {% else %}
+                                            {# New format: list of squadron objects #}
+                                            {% for sq in squadrons %}
+                                            <option value="{{ sq.id }}">{{ sq.id }} - {{ sq.get('name', sq.id) }}</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endif %}
                                 </select>
                             </div>
                             <div class="form-group" id="depBaseGroup" style="display:none;">
@@ -263,6 +95,16 @@ var missionId = null;
                                     <option value="">Select aircraft</option>
                                 </select>
                             </div>
+                            {% if is_admin or is_mission_maker %}
+                            <div class="form-group">
+                                <label for="side">Team Side</label>
+                                <select class="form-control" id="side" name="side" required>
+                                    <option value="blue">Blue</option>
+                                    <option value="red">Red</option>
+                                </select>
+                                <small class="form-text text-muted">Admins and mission makers can create flights for either team.</small>
+                            </div>
+                            {% endif %}
                             <button type="submit" class="btn btn-primary mt-2 w-100">Create Flight</button>
                         </form>
                     </div>
@@ -283,6 +125,102 @@ var missionId = null;
             </div>
         </div>
     </div>
+    <!-- Claimable Flights Section (Curated Slots) -->
+    {% if mission.curated_slots and mission.curated_slots|length > 0 and not user_flight %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="mb-0">Claimable Flights</h3>
+        </div>
+        <div class="card-body">
+            <div id="curated-slots-list">
+                {% for slot in mission.curated_slots %}
+                <div class="flight-group mb-3 p-3" style="background:var(--card-bg); border:1.5px solid var(--primary-color, #5d9cec); border-radius:8px;">
+                    <div class="d-flex flex-wrap align-items-center mb-2">
+                        <div class="mr-4"><strong>Label:</strong> {{ slot.label }}</div>
+                        <div class="mr-4"><strong>Role:</strong> {{ slot.role }}</div>
+                        <div class="mr-4"><strong>Allowed Squadrons:</strong> {{ slot.squadrons|join(', ') }}</div>
+                        <div class="mr-4"><strong>Seats:</strong> {{ slot.seats }}</div>
+                        <div class="mr-4"><strong>Description:</strong> {{ slot.description }}</div>
+                    </div>
+                    <!-- Any user can claim curated slots (squadron restrictions removed) -->
+                    {% if not user_flight %}
+                    <button class="btn btn-success btn-sm" onclick="showClaimForm('{{ loop.index0 }}')">Claim this slot</button>
+                    <div id="claim-form-{{ loop.index0 }}" class="mt-3" style="display:none;">
+                        <form method="POST" action="{{ url_for('signup.claim_curated_slot', mission_id=mission.id, slot_idx=loop.index0) }}">
+                            <input type="hidden" name="slot_idx" value="{{ loop.index0 }}">
+                            
+                            <!-- Squadron Selection -->
+                            <div class="form-group">
+                                <label for="squadron_{{ loop.index0 }}">Squadron</label>
+                                <select class="form-control squadron-select" id="squadron_{{ loop.index0 }}" name="squadron" required>
+                                    <option value="">Select squadron</option>
+                                    {% for sq in slot.squadrons %}
+                                        {% if sq in squadrons %}
+                                        <option value="{{ sq }}">{{ sq }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Departure Base -->
+                            <div class="form-group">
+                                <label for="departure_base_{{ loop.index0 }}">Departure Base</label>
+                                <select class="form-control base-select" id="departure_base_{{ loop.index0 }}" name="departure_base" required>
+                                    <option value="">Select departure base</option>
+                                    {% for base_id, base in bases.items() %}
+                                    <option value="{{ base_id }}">{{ base.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Recovery Base -->
+                            <div class="form-group">
+                                <label for="recovery_base_{{ loop.index0 }}">Recovery Base</label>
+                                <select class="form-control" name="recovery_base" id="recovery_base_{{ loop.index0 }}">
+                                    <option value="">Select recovery base</option>
+                                    {% for base_id, base in bases.items() %}
+                                    <option value="{{ base_id }}">{{ base.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Operations Area -->
+                            <div class="form-group">
+                                <label for="operations_area_{{ loop.index0 }}">Operations Area</label>
+                                <select class="form-control" name="operations_area" id="operations_area_{{ loop.index0 }}" required>
+                                    <option value="">Select area</option>
+                                    {% for area_id, area in operations_areas.items() %}
+                                    <option value="{{ area_id }}">{{ area.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Aircraft -->
+                            <div class="form-group">
+                                <label for="aircraft_id_{{ loop.index0 }}">Aircraft</label>
+                                <select class="form-control aircraft-select" name="aircraft_id" id="aircraft_id_{{ loop.index0 }}" required>
+                                    <option value="">Select aircraft</option>
+                                    <!-- Options will be populated by JavaScript based on squadron selection -->
+                                </select>
+                            </div>
+                            
+                            <!-- Remarks -->
+                            <div class="form-group">
+                                <label for="remarks_{{ loop.index0 }}">Remarks</label>
+                                <input type="text" class="form-control" name="remarks" id="remarks_{{ loop.index0 }}" maxlength="100" placeholder="Optional remarks">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Claim and Create Flight</button>
+                            <button type="button" class="btn btn-secondary" onclick="hideClaimForm('{{ loop.index0 }}')">Cancel</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
     <!-- Current Flights Section -->
     <div class="card">
         <div class="card-header">
@@ -321,28 +259,40 @@ var missionId = null;
                                     <tr>
                                         <th style="padding:10px 15px; width:65px;">Position</th>
                                         <th style="padding:10px 15px; width:100px;">Callsign</th>
-                                        <th style="padding:10px 15px; width:90px;">Tail #</th>
-                                        <th style="padding:10px 15px; width:90px;">Squawk</th>
-                                        <th style="padding:10px 15px;">Pilot</th>
+                                        <th class="pilot-tail" style="padding:10px 15px; width:90px;">Tail #</th>
+                                        <th class="pilot-squawk" style="padding:10px 15px; width:90px;">Squawk</th>
+                                        <th class="pilot-transponder" style="padding:10px 15px; width:90px;">Transponder</th>
+                                        <th class="pilot-nickname" style="padding:10px 15px;">Pilot</th>
+                                        <th style="padding:10px 15px; width:40px;">{# Warning #}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                {% set lead_base = flight.departure_base %}
                                 {% for pos in [1,2,3,4] %}
                                     {% set pilot = (flight.pilots|selectattr('position', 'equalto', pos|string)|list|first) %}
-                                    <tr>
+                                    {% set ac_location = pilot.aircraft_location if pilot and pilot.aircraft_location is defined else None %}
+                                    <tr id="flight-pilot-row-{{ fid }}-{{ pos }}"{% if pos != 1 and pilot and ac_location and ac_location != lead_base %} class="table-warning"{% endif %}>
                                         <td style="padding:10px 15px; font-weight:500;">#{{ pos }}</td>
                                         <td style="padding:10px 15px;">{{ flight.callsign }}{{ '%02d' % pos }}</td>
-                                        <td style="padding:10px 15px;">{% if pilot and pilot.aircraft_id %}{{ pilot.aircraft_id }}{% else %}—{% endif %}</td>
-                                        <td style="padding:10px 15px;">{% if pilot and pilot.squawk %}{{ pilot.squawk }}{% else %}—{% endif %}</td>
-                                        <td style="padding:10px 15px;">
+                                        <td class="pilot-tail" style="padding:10px 15px;">{% if pilot and pilot.aircraft_id %}{{ pilot.aircraft_id }}{% else %}—{% endif %}</td>
+                                        <td class="pilot-squawk" style="padding:10px 15px;">{% if pilot and pilot.squawk %}{{ pilot.squawk }}{% else %}—{% endif %}</td>
+                                        <td class="pilot-transponder" style="padding:10px 15px;">{% if pilot and pilot.transponder %}{{ pilot.transponder }}{% else %}—{% endif %}</td>
+                                        <td class="pilot-nickname" style="padding:10px 15px;">
                                             {% if pilot %}
-                                                <span style="font-weight:500;">{{ pilot.nickname or pilot.name or pilot.pilot_name or 'FLIGHT LEAD' }}</span>
+                                                <span style="font-weight:500;">{{ pilot.nickname|format_nickname or pilot.name|format_nickname or pilot.pilot_name|format_nickname or 'FLIGHT LEAD' }}</span>
                                             {% else %}
                                                 {% if pos == 1 %}
                                                     <span style="opacity:0.7;">FLIGHT LEAD</span>
                                                 {% else %}
                                                     <span style="opacity:0.5;">OPEN SLOT</span>
                                                 {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding:10px 15px; text-align:center;">
+                                            {% if pos != 1 and pilot and ac_location and ac_location != lead_base %}
+                                                <span title="Aircraft not at lead's base!" style="color:#ffc107; font-size:1.2em; cursor:help;">
+                                                    &#9888;
+                                                </span>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -390,251 +340,5 @@ var missionId = null;
         </div>
     </div>
 </div>
-<script type="text/javascript">
-console.log('[DEBUG] signup_mission.html main JS loaded');
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Expand/collapse logic for flights
-    document.querySelectorAll('.flight-collapsed-row').forEach(row => {
-        row.addEventListener('click', function() {
-            const group = row.closest('.flight-group');
-            if (group) {
-                group.classList.toggle('collapsed');
-                const expanded = group.querySelector('.flight-expanded-content');
-                if (expanded) {
-                    expanded.style.display = group.classList.contains('collapsed') ? 'none' : 'block';
-                    row.setAttribute('aria-expanded', !group.classList.contains('collapsed'));
-                }
-            }
-        });
-        // Keyboard accessibility: allow Enter/Space to toggle
-        row.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                row.click();
-            }
-        });
-    });
-
-    // Close all flights button
-    const closeAllBtn = document.getElementById('close-all-flights');
-    if (closeAllBtn) {
-        closeAllBtn.addEventListener('click', function() {
-            document.querySelectorAll('.flight-group').forEach(group => {
-                group.classList.add('collapsed');
-                const expanded = group.querySelector('.flight-expanded-content');
-                if (expanded) {
-                    expanded.style.display = 'none';
-                }
-                const row = group.querySelector('.flight-collapsed-row');
-                if (row) {
-                    row.setAttribute('aria-expanded', false);
-                }
-            });
-        });
-    }
-
-    // --- Dynamic dropdown logic for squadron, base, area, mission type, aircraft ---
-    const squadronSelect = document.getElementById('squadron');
-    const depBaseGroup = document.getElementById('depBaseGroup');
-    const depBaseSelect = document.getElementById('departure_base');
-    const recBaseGroup = document.getElementById('recBaseGroup');
-    const recBaseSelect = document.getElementById('recovery_base');
-    const areaGroup = document.getElementById('areaGroup');
-    const areaSelect = document.getElementById('operations_area');
-    const missionTypeGroup = document.getElementById('missionTypeGroup');
-    const missionTypeSelect = document.getElementById('mission_type');
-    const remarksGroup = document.getElementById('remarksGroup');
-    const aircraftGroup = document.getElementById('aircraftGroup');
-    const aircraftSelect = document.getElementById('aircraft_id');
-
-    // Helper: Populate departure base dropdown for create flight form
-    async function populateDepartureBaseDropdown() {
-        if (!depBaseSelect || !squadronSelect.value) return;
-        depBaseSelect.innerHTML = '<option value="">Select departure base</option>';
-        // AJAX to backend for allowed bases
-        try {
-            const resp = await fetch("/signup/squadron-bases", {
-                method: "POST",
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `squadron=${encodeURIComponent(squadronSelect.value)}&persistent=${persistentAcLocation ? '1' : '0'}`
-            });
-            const data = await resp.json();
-            if (data.bases && Array.isArray(data.bases)) {
-                for (const baseId of data.bases) {
-                    // Find base name from window.basesData if available, else fallback to baseId
-                    let baseName = baseId;
-                    if (window.basesData && window.basesData[baseId] && window.basesData[baseId].name) {
-                        baseName = window.basesData[baseId].name;
-                    }
-                    const opt = document.createElement('option');
-                    opt.value = baseId;
-                    opt.textContent = baseName;
-                    depBaseSelect.appendChild(opt);
-                }
-            }
-        } catch (e) {
-            console.error('[ERROR] Could not fetch bases for squadron:', e);
-        }
-    }
-
-    // Helper: Populate aircraft dropdown for create flight form (unchanged, but now called after depBaseSelect update)
-    function populateAircraftDropdown() {
-        if (!aircraftSelect) return;
-        aircraftSelect.innerHTML = '<option value="">Select aircraft</option>';
-        let found = false;
-        for (const [acId, ac] of Object.entries(window.aircraftData)) {
-            if (
-                (!squadronSelect.value || String(ac.squadron) === String(squadronSelect.value)) &&
-                (
-                    !persistentAcLocation || // If persistence is OFF, ignore base
-                    (!depBaseSelect.value || String(ac.location) === String(depBaseSelect.value))
-                )
-            ) {
-                const opt = document.createElement('option');
-                opt.value = acId;
-                if (persistentAcLocation) {
-                    opt.textContent = `${ac.type} (${acId}) - ${ac.location}`;
-                } else {
-                    opt.textContent = `${ac.type} (${acId})`;
-                }
-                aircraftSelect.appendChild(opt);
-                found = true;
-            }
-        }
-        if (!found) {
-            const opt = document.createElement('option');
-            opt.value = '';
-            opt.textContent = 'No aircraft available for this squadron/base';
-            aircraftSelect.appendChild(opt);
-        }
-    }
-
-    if (squadronSelect) {
-        squadronSelect.addEventListener('change', function() {
-            if (squadronSelect.value) {
-                depBaseGroup.style.display = '';
-                populateDepartureBaseDropdown().then(() => {
-                    populateAircraftDropdown();
-                });
-            } else {
-                depBaseGroup.style.display = 'none';
-                recBaseGroup.style.display = 'none';
-                areaGroup.style.display = 'none';
-                missionTypeGroup.style.display = 'none';
-                remarksGroup.style.display = 'none';
-                aircraftGroup.style.display = 'none';
-            }
-        });
-    }
-    if (depBaseSelect) {
-        depBaseSelect.addEventListener('change', function() {
-            if (depBaseSelect.value) {
-                recBaseGroup.style.display = '';
-            } else {
-                recBaseGroup.style.display = 'none';
-                areaGroup.style.display = 'none';
-                missionTypeGroup.style.display = 'none';
-                remarksGroup.style.display = 'none';
-                aircraftGroup.style.display = 'none';
-            }
-            populateAircraftDropdown();
-        });
-    }
-
-    if (recBaseSelect) {
-        recBaseSelect.addEventListener('change', function() {
-            if (recBaseSelect.value) {
-                areaGroup.style.display = '';
-            } else {
-                areaGroup.style.display = 'none';
-                missionTypeGroup.style.display = 'none';
-                remarksGroup.style.display = 'none';
-                aircraftGroup.style.display = 'none';
-            }
-        });
-    }
-    if (areaSelect) {
-        areaSelect.addEventListener('change', function() {
-            if (areaSelect.value) {
-                missionTypeGroup.style.display = '';
-            } else {
-                missionTypeGroup.style.display = 'none';
-                remarksGroup.style.display = 'none';
-                aircraftGroup.style.display = 'none';
-            }
-        });
-    }
-    if (missionTypeSelect) {
-        missionTypeSelect.addEventListener('change', function() {
-            if (missionTypeSelect.value) {
-                remarksGroup.style.display = '';
-                aircraftGroup.style.display = '';
-                populateAircraftDropdown();
-            } else {
-                remarksGroup.style.display = 'none';
-                aircraftGroup.style.display = 'none';
-            }
-        });
-    }
-
-    // --- Join as position button logic ---
-    document.querySelectorAll('.join-pos-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const flightId = btn.getAttribute('data-flight-id');
-            const squadron = btn.getAttribute('data-squadron');
-            const base = btn.getAttribute('data-base');
-            const pos = btn.getAttribute('data-position');
-            // Hide all other join forms
-            document.querySelectorAll('.join-flight-form').forEach(f => f.style.display = 'none');
-            // Show this join form
-            const formDiv = document.getElementById('join-form-' + flightId + '-' + pos);
-            if (formDiv) {
-                formDiv.style.display = 'block';
-                // Populate aircraft dropdown using JS and aircraftData
-                const acSelect = document.getElementById('aircraft_id_' + flightId + '_' + pos);
-                if (acSelect) {
-                    acSelect.innerHTML = '<option value="">Select aircraft</option>';
-                    let found = false;
-                    for (const [acId, ac] of Object.entries(window.aircraftData)) {
-                        if (String(ac.squadron) === String(squadron)) {
-                            const opt = document.createElement('option');
-                            opt.value = acId;
-                            opt.textContent = `${ac.type} (${acId}) - ${ac.location}`;
-                            opt.setAttribute('data-location', ac.location);
-                            acSelect.appendChild(opt);
-                            found = true;
-                        }
-                    }
-                    if (!found) {
-                        const opt = document.createElement('option');
-                        opt.value = '';
-                        opt.textContent = 'No aircraft available for this squadron';
-                        acSelect.appendChild(opt);
-                    }
-                }
-                // Cross-base warning logic
-                acSelect && acSelect.addEventListener('change', function() {
-                    const selected = acSelect.options[acSelect.selectedIndex];
-                    const acLoc = selected ? selected.getAttribute('data-location') : null;
-                    const warning = document.getElementById('cross-base-warning-' + flightId + '-' + pos);
-                    if (acLoc && acLoc !== base) {
-                        warning.style.display = '';
-                    } else {
-                        warning.style.display = 'none';
-                    }
-                });
-            }
-        });
-    });
-    document.querySelectorAll('.cancel-join-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const flightId = btn.getAttribute('data-flight-id');
-            const pos = btn.getAttribute('data-position');
-            const formDiv = document.getElementById('join-form-' + flightId + '-' + pos);
-            if (formDiv) formDiv.style.display = 'none';
-        });
-    });
-});
-</script>
+<script src="{{ url_for('static', filename='js/signup_mission.js') }}"></script>
 {% endblock %}

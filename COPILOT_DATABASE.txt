@@ -1,0 +1,361 @@
+# AJAC DCS MISSION PLANNER - COMPREHENSIVE CODEBASE DOCUMENTATION
+# Created: May 30, 2025
+# Author: GitHub Copilot
+
+## 1. SYSTEM OVERVIEW
+
+### 1.1 Introduction
+The AJAC DCS Mission Planner is a web application designed for planning and coordinating Digital Combat Simulator (DCS) missions for the Arctic Joint Air Command (AJAC). The system allows mission makers to create campaigns and missions, while pilots can sign up for flights and organize their participation in upcoming operations.
+
+### 1.2 Architecture
+- **Framework**: Flask (Python)
+- **Authentication**: Discord OAuth2
+- **Storage**: JSON files (no traditional database)
+- **Deployment**: Apache + mod_wsgi + systemd on VPS
+- **Structure**: Modular design with blueprints for features
+
+### 1.3 Key Components
+1. **Authentication System**: Discord OAuth integration
+2. **Campaign Management**: Creating and managing military campaigns
+3. **Mission Planning**: Creating mission briefs and curated slots
+4. **Flight Signup**: Pilots joining missions with aircraft selection
+5. **Squadron Management**: Aircraft inventory and personnel management
+6. **Resource Allocation**: Frequencies, transponder codes, callsigns
+
+## 2. CORE MODULES
+
+### 2.1 Application Core (app.py)
+The entry point for the Flask application, which:
+- Initializes the Flask application using a factory pattern
+- Sets up Discord OAuth2 integration
+- Registers blueprint modules for different features
+- Configures session management and logging
+- Handles role-based access control via Discord roles
+
+Key functions:
+- `create_app()`: Application factory creating Flask instance
+- `configure_logging()`: Sets up file and console logging
+- `register_blueprints()`: Connects modular feature blueprints
+- Root route (`@app.route("/")`): Landing page with role-based UI
+
+### 2.2 Configuration System (config.py, secret_config.py)
+The configuration system loads settings from:
+- `secret_config.py`: Contains sensitive credentials and settings
+- Environment-specific settings through Flask configuration
+
+Primary settings include:
+- Discord OAuth2 credentials
+- Role mappings for permissions
+- Logging configuration
+- Session settings
+- Environment toggles (development/production)
+
+### 2.3 WSGI Entry Point (wsgi.py)
+Apache mod_wsgi entry point that:
+- Imports the Flask application
+- Provides the WSGI callable as 'application'
+- Enables touch-reloading for deployment
+
+### 2.4 Discord Bot Integration (disc_bot.py)
+FastAPI-based microservice that:
+- Connects to Discord's API to retrieve user roles
+- Provides an internal API endpoint for role information
+- Supports the authentication flow with role validation
+
+## 3. DATA MANAGEMENT
+
+### 3.1 Storage System (utils/storage.py)
+The core data persistence layer with:
+- JSON file-based storage for missions and campaigns
+- Hierarchical structure for organizing data
+- Directory management for campaign-specific resources
+- ID generation and file path management
+
+Key functions:
+- `save_mission()`: Persists mission data to JSON
+- `load_mission()`: Retrieves mission data with validation
+- `save_campaign()`: Persists campaign configuration
+- `list_missions()`: Retrieves all available missions
+- `list_campaigns()`: Retrieves all available campaigns
+- `load_reference_data()`: Loads configuration files like bases, aircraft
+
+### 3.2 Caching System (utils/cache.py)
+Thread-safe in-memory caching system for performance optimization:
+- Automatic detection of file modifications
+- Configurable time-to-live (TTL) for cache entries
+- Cache statistics for monitoring
+- Request-level micro-caching for expensive operations
+
+Key components:
+- `JSONFileCache`: Thread-safe cache with TTL and auto-reload
+- `get_cached_json()`: Convenience function for retrieving cached JSON
+- `invalidate_cache()`: Force refresh cached data
+
+### 3.3 Squadron Management (utils/squadron_manager.py)
+Template-based squadron management system:
+- Squadron templates with inheritance
+- Campaign-specific overrides
+- Aircraft inventory management
+- Base assignment and validation
+
+Key functions:
+- `get_squadron_templates()`: Loads squadron configuration templates
+- `get_squadron_for_campaign()`: Resolves squadron with campaign-specific overrides
+- `get_all_squadrons_for_campaign()`: Batch processing of squadron data
+- `get_campaign_squadrons()`: Enhanced squadron data for mission planning
+
+### 3.4 Aircraft State Management (utils/aircraft_state.py)
+Campaign-level aircraft state tracking system:
+- Individual tail number tracking
+- Maintenance state management
+- Base location tracking
+- Special qualification tracking
+
+Key functions:
+- `generate_campaign_aircraft_state()`: Initializes aircraft state from templates
+- `update_aircraft_state()`: Modifies state for specific tail numbers
+- `get_aircraft_at_base_for_campaign()`: Filters aircraft by location
+- `get_squadron_aircraft_for_campaign()`: Gets squadron-specific aircraft
+
+### 3.5 Resource Management (utils/resources.py)
+Resource allocation and management system:
+- Callsign allocation
+- Frequency assignment
+- TACAN channel management
+- Transponder code assignment
+
+Key functions:
+- `get_callsign()`: Retrieves a callsign from squadron template
+- `get_tacan_channel()`: Assigns a unique TACAN channel for a mission
+- `get_intraflight_freq()`: Assigns radio frequencies for flights
+- `get_transponder_codes()`: Generates transponder codes for aircraft
+
+## 4. FEATURE MODULES
+
+### 4.1 Authentication (features/auth)
+Handles Discord OAuth authentication flow:
+- Login process
+- OAuth callback processing
+- Session management
+- Logout handling
+
+Key routes:
+- `/auth/login/`: Initiates Discord OAuth flow
+- `/auth/callback`: Processes OAuth response and sets session
+- `/auth/logout/`: Terminates session and revokes OAuth token
+
+### 4.2 Campaigns (features/campaigns)
+Campaign management interface:
+- Campaign creation with squadron assignments
+- Theatre and base selection
+- Campaign status management
+- Squadron base assignment
+
+Key routes:
+- `/campaigns/`: Lists all campaigns
+- `/campaigns/create`: Creates new campaigns
+- `/campaigns/edit/<campaign_id>`: Modifies existing campaigns
+
+### 4.3 Missions (features/missions)
+Mission planning system:
+- Mission creation within campaigns
+- Curated slot management
+- Mission briefing creation
+- ATO-compliant mission ID generation
+
+Key routes:
+- `/missions/`: Lists all missions
+- `/missions/create`: Creates new missions
+- `/missions/edit/<mission_id>`: Modifies existing missions
+- `/missions/<mission_id>`: Views mission details
+- `/missions/claim_curated_slot/<mission_id>/<slot_index>`: Converts slot to flight
+
+### 4.4 Signup (features/signup)
+Flight signup system:
+- Pilot slot registration
+- Aircraft selection
+- Flight lead assignment
+- Flight member management
+
+Key routes:
+- `/signup/mission/<mission_id>`: Mission signup page
+- `/signup/flight/create`: Creates new flights
+- `/signup/flight/join/<flight_id>`: Joins existing flights
+- `/signup/flight/leave/<flight_id>`: Leaves a flight
+
+### 4.5 Admin (features/admin)
+Administrative interface:
+- System status monitoring
+- Squadron management
+- User role verification
+- Configuration management
+
+Key routes:
+- `/admin/`: Admin dashboard
+- `/admin/squadrons`: Squadron management interface
+- `/admin/system`: System status monitoring
+
+## 5. MODELS
+
+### 5.1 Flight Model (models/flight.py)
+Core data structure for mission flights:
+- Flight information (callsign, number, squadron)
+- Navigation details (departure, recovery, operations area)
+- Radio information (frequencies, transponder codes, TACAN)
+- Personnel tracking (pilots, positions)
+- Aircraft tracking (tail numbers, types)
+
+Key functions:
+- `create_flight()`: Creates a new flight
+- `save_flight()`: Persists flight changes
+- `get_flight()`: Retrieves flight by ID
+- `join_flight()`: Adds pilot to flight
+- `leave_flight()`: Removes pilot from flight
+- Data format handling for both legacy and current structures
+
+## 6. UTILITIES
+
+### 6.1 Authentication Utilities (utils/auth.py)
+Authorization decorators and helpers:
+- Login requirement enforcement
+- Admin role verification
+- Route protection
+
+Key components:
+- `@login_required`: Decorator for authenticated routes
+- `@admin_required`: Decorator for admin-only routes
+
+## 7. DATA STRUCTURE
+
+### 7.1 Campaign Structure
+- ID and metadata (name, shorthand, type, status)
+- Theatre selection
+- Squadron assignments with base locations
+- Campaign-specific squadron overrides
+- Aircraft inventory status
+
+### 7.2 Squadron Template Structure
+- Base squadron configuration (name, aircraft type)
+- Default base location
+- Callsign banks for automatic assignment
+- Aircraft inventory (tail numbers, maintenance state)
+- Special qualifications and requirements
+
+### 7.3 Mission Structure
+- Mission ID and briefing information
+- Campaign association
+- Temporal data (real-world and in-game times)
+- Curated slots for pre-planned flights
+- User-created flights with pilot assignments
+- Resource assignments (frequencies, transponder codes)
+
+### 7.4 Flight Structure
+- Squadron and callsign information
+- Base assignments (departure/recovery)
+- Mission type and operations area
+- Pilot roster with positions
+- Aircraft assignments with tail numbers
+- Radio and navigation data (frequencies, transponder codes)
+
+## 8. RECENT SYSTEM CHANGES
+
+### 8.1 Performance Improvements
+- Added thread-safe JSON caching system
+- Optimized squadron template loading
+- Implemented request-level micro-caching
+- Reduced excessive logging
+- Resolved N+1 query issues
+- Fixed Unicode logging errors
+
+### 8.2 Data Structure Redesign
+- Created template-based squadron system
+- Implemented campaign-specific overrides
+- Developed aircraft state tracking
+- Migrated to hierarchical storage structure
+- Enhanced resource allocation system
+
+### 8.3 Bug Fixes
+- Fixed TypeError in pilot data handling
+- Resolved missing imports
+- Fixed 500 errors in flight signup
+- Corrected data format conversion issues
+- Created missing configuration files
+
+## 9. KNOWN ISSUES AND LIMITATIONS
+
+### 9.1 Performance Concerns
+- JSON file operations for frequently modified data
+- No database transactions for complex operations
+- Limited concurrency handling for file operations
+
+### 9.2 Security Considerations
+- Input validation improvements needed
+- CSRF protection implementation pending
+- Session security hardening required
+
+### 9.3 Technical Debt
+- Some legacy data formats still supported
+- Template inheritance system complexity
+- Discord bot API dependency
+
+## 10. DEPLOYMENT INFORMATION
+
+### 10.1 Server Configuration
+- Apache with mod_wsgi
+- Python 3.12
+- Flask application served through WSGI
+- Virtual host configuration for multiple environments
+
+### 10.2 Directory Structure
+- `/var/www/beta.ajac.no/` - Application root
+- `/var/www/beta.ajac.no/instance/` - Instance-specific data
+- `/var/www/beta.ajac.no/instance/campaigns/` - Campaign data
+- `/var/www/beta.ajac.no/instance/missions/` - Mission data
+- `/var/www/beta.ajac.no/instance/global/` - Global configuration
+
+### 10.3 Deployment Procedures
+- Touch reload: `touch /var/www/beta.ajac.no/wsgi.py`
+- Graceful Apache reload: `sudo systemctl reload apache2`
+- Full restart (discouraged): `sudo systemctl restart apache2`
+
+## 11. DEVELOPMENT GUIDELINES
+
+### 11.1 Code Structure
+- Modular design with blueprints
+- Feature-oriented organization
+- Utility modules for shared functionality
+- Model-based data representation
+
+### 11.2 Best Practices
+- Use caching for static data
+- Implement proper error handling
+- Follow consistent logging patterns
+- Validate input data thoroughly
+- Document complex functionality
+
+### 11.3 Testing Approach
+- Test critical paths manually
+- Verify data integrity after changes
+- Check console logs for errors
+- Validate against requirements
+
+## 12. FUTURE ENHANCEMENTS
+
+### 12.1 Planned Improvements
+- Database migration for better performance
+- Enhanced security measures
+- Improved error handling and validation
+- Comprehensive user management
+- Advanced mission planning features
+
+### 12.2 Architectural Considerations
+- Potential microservice separation
+- API-first approach for frontend flexibility
+- Improved caching strategy
+- Better concurrency handling
+
+## 13. CONTACT AND SUPPORT
+
+For issues with this system, contact:
+- Discord: AJAC Administration Team
+- Documentation maintained by GitHub Copilot

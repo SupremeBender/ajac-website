@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<main class="profile-page" aria-labelledby="profile-heading">
+  <h1 id="profile-heading">My Profile</h1>
+  {% if message %}
+    <div class="alert alert-info" role="status">{{ message }}</div>
+  {% endif %}
+  <section class="profile-info">
+    <div class="profile-avatar">
+      {% if avatar %}
+        <img src="{{ avatar }}" alt="Discord avatar for {{ display_name }}" width="80" height="80" style="border-radius: 50%;">
+      {% endif %}
+    </div>
+    <div class="profile-details">
+      <p><strong>Display Name:</strong> {{ display_name }}</p>
+      <p><strong>Discord Username:</strong> {{ username }} (ID: {{ user_id }})</p>
+      <p><strong>Roles:</strong>
+        <span class="badge badge-pill badge-primary" aria-label="Admin" style="margin-right:0.5em;" {% if not is_admin %}hidden{% endif %}>Admin</span>
+        <span class="badge badge-pill badge-info" aria-label="Mission Maker" style="margin-right:0.5em;" {% if not is_mission_maker %}hidden{% endif %}>Mission Maker</span>
+        <span class="badge badge-pill badge-danger" aria-label="Red Team" style="margin-right:0.5em;" {% if not has_red %}hidden{% endif %}>Red Team</span>
+        <span class="badge badge-pill badge-primary" aria-label="Blue Team" style="margin-right:0.5em; background-color:#007bff;" {% if not has_blue %}hidden{% endif %}>Blue Team</span>
+        {% if not (is_admin or is_mission_maker or has_red or has_blue) %}<span class="text-muted">None</span>{% endif %}
+      </p>
+    </div>
+  </section>
+</main>
+{% endblock %}

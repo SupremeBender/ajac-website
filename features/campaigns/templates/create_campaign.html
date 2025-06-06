@@ -1,46 +1,251 @@
 {% extends "base.html" %}
-{% block title %}Create Campaign{% endblock %}
+{% block title %}{% if edit_mode %}Edit Campaign{% else %}Create Campaign{% endif %}{% endblock %}
 {% block content %}
 <div class="container mt-4">
-    <h1>Create New Campaign</h1>
-    <form method="POST" class="mt-4">
+    <h1>{% if edit_mode %}Edit Campaign{% else %}Create New Campaign{% endif %}</h1>
+    <form method="POST" class="mt-4" id="campaign-form">
         <div class="form-group">
             <label for="name">Campaign Name</label>
-            <input type="text" class="form-control" id="name" name="name" required>
+            <input type="text" class="form-control" id="name" name="name" required value="{% if edit_mode %}{{ campaign.name }}{% else %}{{ request.form.get('name', request.args.get('name', '')) }}{% endif %}">
         </div>
         <div class="form-group">
             <label for="shorthand">Shorthand</label>
             <input type="text" class="form-control" id="shorthand" name="shorthand" required 
-                   placeholder="e.g., PP15, RF22" title="Short code used for mission IDs">
+                   placeholder="e.g., PP15, RF22" title="Short code used for mission IDs"
+                   value="{% if edit_mode %}{{ campaign.shorthand }}{% else %}{{ request.form.get('shorthand', request.args.get('shorthand', '')) }}{% endif %}">
             <small class="form-text text-muted">Short code used for mission IDs (e.g., PP15, RF22)</small>
         </div>
         <div class="form-group">
             <label for="type">Type</label>
             <select class="form-control" id="type" name="type" required>
-                <option value="EX">Exercise (EX)</option>
-                <option value="OP">Operation (OP)</option>
+                <option value="OP" {% if (edit_mode and campaign.type == 'OP') or (not edit_mode and (request.form.get('type', request.args.get('type', '')) == 'OP')) %}selected{% endif %}>Operation (OP)</option>
+                <option value="EX" {% if (edit_mode and campaign.type == 'EX') or (not edit_mode and (request.form.get('type', request.args.get('type', '')) == 'EX')) %}selected{% endif %}>Exercise (EX)</option>
+                <option value="TR" {% if (edit_mode and campaign.type == 'TR') or (not edit_mode and (request.form.get('type', request.args.get('type', '')) == 'TR')) %}selected{% endif %}>Training (TR)</option>
             </select>
+            <small class="form-text text-muted">
+                <strong>OP</strong>: Real operations with specific objectives and targets<br>
+                <strong>EX</strong>: Structured exercises that simulate operations<br>
+                <strong>TR</strong>: Training sessions where pilots select exercise areas
+            </small>
         </div>
         <div class="form-group">
             <label for="status">Status</label>
             <select class="form-control" id="status" name="status" required>
-                <option value="active">Active</option>
-                <option value="planned">Planned</option>
-                <option value="completed">Completed</option>
+                <option value="active" {% if (edit_mode and campaign.status == 'active') or (not edit_mode and (request.form.get('status', request.args.get('status', 'active')) == 'active')) %}selected{% endif %}>Active</option>
+                <option value="planned" {% if (edit_mode and campaign.status == 'planned') or (not edit_mode and (request.form.get('status', request.args.get('status', '')) == 'planned')) %}selected{% endif %}>Planned</option>
+                <option value="completed" {% if (edit_mode and campaign.status == 'completed') or (not edit_mode and (request.form.get('status', request.args.get('status', '')) == 'completed')) %}selected{% endif %}>Completed</option>
             </select>
         </div>
         <div class="form-group">
+            <label for="theatre">Theatre</label>
+            <select class="form-control" id="theatre" name="theatre" required>
+                <option value="">-- Select Theatre --</option>
+                {% for t in theatres %}
+                    <option value="{{ t.filename }}" {% if (edit_mode and campaign.theatre == t.filename) or (not edit_mode and selected_theatre == t.filename) %}selected{% endif %}>{{ t.name }}</option>
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted">Select the campaign theatre. This determines available bases and navdata.</small>
+        </div>
+        {% if selected_theatre or (edit_mode and campaign.theatre) %}
+        <div class="form-group row" id="squadron-dual-list-row">
+            <div class="col-md-5">
+                <label for="all-squadrons-list">All Squadrons</label>
+                <ul id="all-squadrons-list" class="list-group" aria-label="All squadrons" style="min-height: 200px;">
+                    {% for sq_id, sq in squadrons.items() %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center" data-sq-id="{{ sq_id }}" tabindex="0">
+                            <span>{{ sq.name }}</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary add-sq-btn" aria-label="Add {{ sq.name }}">&rarr;</button>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-md-5">
+                <label for="active-squadrons-list">Active Squadrons</label>
+                <ul id="active-squadrons-list" class="list-group" aria-label="Active squadrons" style="min-height: 200px;">
+                    <!-- Active squadrons will be populated by JS -->
+                </ul>
+            </div>
+        </div>
+        <div id="squadron-bases-container"></div>
+        {% endif %}
+        <div class="form-group">
             <label for="persistent_ac_location">
-                <input type="checkbox" id="persistent_ac_location" name="persistent_ac_location" checked>
+                <input type="checkbox" id="persistent_ac_location" name="persistent_ac_location" {% if (edit_mode and campaign.persistent_ac_location) or (not edit_mode and request.form.get('persistent_ac_location', request.args.get('persistent_ac_location', 'on')) == 'on') %}checked{% endif %}>
                 Persistent A/C Location
             </label>
-            <small class="form-text text-muted">If enabled, aircraft can only depart from their current location as defined in aircraft.json.</small>
+            <small class="form-text text-muted">If enabled, aircraft can only depart from their current location as defined in squadron configuration.</small>
         </div>
-        <button type="submit" class="btn btn-primary">Create Campaign</button>
+        <button type="submit" class="btn btn-primary">{% if edit_mode %}Save Changes{% else %}Create Campaign{% endif %}</button>
         <a href="{{ url_for('campaigns.list_campaigns_route') }}" class="btn btn-secondary">Cancel</a>
     </form>
     <footer class="mt-5">
         <p class="text-center text-muted">&copy; {{ current_year }} AJAC Flight Operations</p>
     </footer>
 </div>
+{% set initial_active_squadrons = [] %}
+{% if edit_mode %}
+  {% for sq in campaign.squadrons %}
+    {% set _ = initial_active_squadrons.append(sq.id) %}
+  {% endfor %}
+{% else %}
+  {% set initial_active_squadrons = request.form.getlist('squadrons') %}
+  {% if not initial_active_squadrons %}
+    {% set initial_active_squadrons = request.args.getlist('squadrons') %}
+  {% endif %}
+{% endif %}
+<script>
+const squadrons = JSON.parse('{{ squadrons|tojson|safe }}');
+const bases = JSON.parse('{{ bases|tojson|safe }}');
+const initialActiveSquadrons = {{ initial_active_squadrons|tojson|safe }};
+
+function getActiveSquadronIds() {
+    const input = document.getElementById('active-squadrons-input');
+    if (!input) return [];
+    return input.value ? input.value.split(',') : [];
+}
+function updateDualListUI() {
+    const allList = document.getElementById('all-squadrons-list');
+    const activeList = document.getElementById('active-squadrons-list');
+    const activeInput = document.getElementById('active-squadrons-input');
+    allList.innerHTML = '';
+    activeList.innerHTML = '';
+    const activeIds = getActiveSquadronIds();
+    Object.entries(squadrons).forEach(([sq_id, sq]) => {
+        if (!activeIds.includes(sq_id)) {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.setAttribute('data-sq-id', sq_id);
+            li.tabIndex = 0;
+            li.innerHTML = `<span>${sq.name}</span>
+                <button type="button" class="btn btn-sm btn-outline-primary add-sq-btn" aria-label="Add ${sq.name}">&rarr;</button>`;
+            allList.appendChild(li);
+        }
+    });
+    activeIds.forEach(sq_id => {
+        const sq = squadrons[sq_id];
+        if (!sq) return;
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.setAttribute('data-sq-id', sq_id);
+        li.tabIndex = 0;
+        li.innerHTML = `<span>${sq.name}</span>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-sq-btn" aria-label="Remove ${sq.name}">&larr;</button>`;
+        activeList.appendChild(li);
+    });
+    updateSquadronBaseSelectors();
+}
+function updateSquadronBaseSelectors() {
+    const container = document.getElementById('squadron-bases-container');
+    container.innerHTML = '';
+    const activeIds = getActiveSquadronIds();
+    activeIds.forEach(sq_id => {
+        const sq = squadrons[sq_id];
+        if (!sq) return;
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        const label = document.createElement('label');
+        label.setAttribute('for', 'base_' + sq_id);
+        label.textContent = 'Starting Base for ' + sq.name;
+        const select = document.createElement('select');
+        select.className = 'form-control';
+        select.id = 'base_' + sq_id;
+        select.name = 'base_' + sq_id;
+        select.required = true;
+        bases.forEach(base => {
+            const opt = document.createElement('option');
+            opt.value = base.id;
+            opt.textContent = base.name;
+            select.appendChild(opt);
+        });
+        div.appendChild(label);
+        div.appendChild(select);
+        container.appendChild(div);
+    });
+}
+function handleFormSubmit(e) {
+    const form = document.getElementById('campaign-form');
+    form.querySelectorAll('input[name="squadrons"]').forEach(el => el.remove());
+    getActiveSquadronIds().forEach(sq_id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'squadrons';
+        input.value = sq_id;
+        form.appendChild(input);
+    });
+}
+if (document.getElementById('all-squadrons-list')) {
+    let input = document.getElementById('active-squadrons-input');
+    if (!input) {
+        input = document.createElement('input');
+        input.type = 'hidden';
+        input.id = 'active-squadrons-input';
+        input.name = 'active_squadrons';
+        input.value = '';
+        document.getElementById('campaign-form').appendChild(input);
+    }
+    // Restore from GET/POST if present
+    if (initialActiveSquadrons.length > 0) {
+        input.value = initialActiveSquadrons.join(',');
+    }
+    updateDualListUI();
+    // Add/remove squadron via arrow buttons
+    document.getElementById('all-squadrons-list').addEventListener('click', function(e) {
+        if (e.target.closest('.add-sq-btn')) {
+            const li = e.target.closest('li');
+            const sq_id = li.getAttribute('data-sq-id');
+            let ids = getActiveSquadronIds();
+            if (!ids.includes(sq_id)) ids.push(sq_id);
+            document.getElementById('active-squadrons-input').value = ids.join(',');
+            updateDualListUI();
+        }
+    });
+    document.getElementById('active-squadrons-list').addEventListener('click', function(e) {
+        if (e.target.closest('.remove-sq-btn')) {
+            const li = e.target.closest('li');
+            const sq_id = li.getAttribute('data-sq-id');
+            let ids = getActiveSquadronIds().filter(id => id !== sq_id);
+            document.getElementById('active-squadrons-input').value = ids.join(',');
+            updateDualListUI();
+        }
+    });
+    document.getElementById('campaign-form').addEventListener('submit', handleFormSubmit);
+}
+// When theatre changes, submit the form with GET and preserve all fields
+const theatreSelect = document.getElementById('theatre');
+if (theatreSelect) {
+    theatreSelect.addEventListener('change', function() {
+        const form = document.getElementById('campaign-form');
+        if (form) {
+            // Build a URL with all current form values as query params
+            const params = new URLSearchParams();
+            
+            // Manually collect all form fields to preserve empty values
+            const fields = ['name', 'shorthand', 'type', 'status', 'persistent_ac_location'];
+            fields.forEach(fieldName => {
+                const field = form.querySelector(`[name="${fieldName}"]`);
+                if (field) {
+                    if (field.type === 'checkbox') {
+                        if (field.checked) params.append(fieldName, 'on');
+                    } else {
+                        params.append(fieldName, field.value || '');
+                    }
+                }
+            });
+            
+            // Set the theatre to the new value
+            params.append('theatre', this.value);
+            
+            // Add squadron data if present
+            const squadronInput = document.getElementById('active-squadrons-input');
+            if (squadronInput && squadronInput.value) {
+                const squadronIds = squadronInput.value.split(',').filter(id => id.trim());
+                squadronIds.forEach(id => params.append('squadrons', id));
+            }
+            
+            console.log('[DEBUG] Preserving form data:', params.toString());
+            window.location = window.location.pathname + '?' + params.toString();
+        }
+    });
+}
+</script>
 {% endblock %}

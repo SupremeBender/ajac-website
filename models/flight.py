@@ -3,12 +3,81 @@ Flight model for the signup module
 """
 import json
 import os
-from datetime import datetime
-from utils.storage import load_json, save_json
-import logging
+import traceback
 import uuid
+from datetime import datetime
+import logging
+from pathlib import Path
+
+# Import utils once at the top level
+from utils.storage import load_json, save_json, load_mission, save_mission, list_missions
+from utils.resources import (
+    get_squadrons, get_tacan_channel, get_intraflight_freq, 
+    get_aircraft_at_base, get_squadron_aircraft
+)
+from utils.squadron_manager import squadron_manager
 
 logger = logging.getLogger(__name__)
+
+def convert_old_flight_data(flight_data, mission_id):
+    """
+    Convert old format flight data to new format.
+    
+    Args:
+        flight_data (dict): Flight data in old or new format
+        mission_id (str): The mission ID this flight belongs to
+        
+    Returns:
+        dict: Flight data in the new format
+    """
+    # Skip conversion if already in new format
+    if "flight_id" in flight_data and "mission_id" in flight_data:
+        return flight_data
+    
+    # Skip if missing critical data
+    if "id" not in flight_data:
+        logger.warning(f"Skipping flight data with missing ID: {flight_data.keys()}")
+        return flight_data
+    
+    # Convert members list to pilots list with proper structure
+    pilots = []
+    if "members" in flight_data:
+        for i, member_username in enumerate(flight_data["members"]):
+            # For old data, we don't have user_ids, so we'll use username as fallback
+            pilot = {
+                "user_id": member_username,  # We don't have actual user_id in old data
+                "username": member_username,
+                "nickname": member_username,
+                "position": str(i + 1),  # Assign positions 1, 2, 3, etc.
+                "joined_at": flight_data.get("created_at", ""),
+                "callsign": f"{flight_data['callsign']}{flight_data.get('flight_number', 1)}{i + 1}",
+                "transponder": None,  # Old data doesn't have individual transponders
+                "aircraft": flight_data.get("aircraft_id")
+            }
+            pilots.append(pilot)
+    
+    # Build the standardized flight data dictionary
+    return {
+        "mission_id": mission_id,
+        "flight_id": flight_data["id"],
+        "squadron": flight_data.get("squadrons", ["unknown"])[0] if flight_data.get("squadrons") else "unknown",
+        "callsign": flight_data["callsign"],
+        "flight_number": flight_data.get("flight_number", 1),
+        "departure_base": flight_data["departure_base"],
+        "recovery_base": flight_data["recovery_base"],
+        "operations_area": flight_data["operations_area"],
+        "mission_type": flight_data.get("role"),
+        "remarks": flight_data.get("remarks", ""),
+        "aircraft_ids": [flight_data["aircraft_id"]] if flight_data.get("aircraft_id") else [],
+        "transponder_codes": flight_data.get("transponder_codes", []),
+        "tacan_channel": flight_data.get("tacan_channel"),
+        "intraflight_freq": flight_data.get("intraflight_freq"),
+        "pilots": pilots,
+        "status": flight_data.get("status", "active"),
+        "side": flight_data.get("side", "blue"),
+        "created_at": flight_data.get("created_at", datetime.now().isoformat())
+    }
+
 
 class Flight:
     def __init__(self, mission_id, flight_id=None, squadron=None, callsign=None, 
@@ -82,26 +151,40 @@ class Flight:
         return flight
 
 def create_flight(mission_id, flight_data, user_id, username):
-    from utils.resources import get_squadrons, get_tacan_channel, get_intraflight_freq, get_aircraft_at_base
-    from utils.storage import load_mission, save_mission
-    import traceback
+    """
+    Create a new flight in a mission.
+    All squadron/callsign/aircraft data must come from the campaign's squadrons.json, NOT the squadron template.
+    """
     logger.debug(f"[CREATE_FLIGHT] mission_id={mission_id}, flight_data={flight_data}, user_id={user_id}, username={username}")
     try:
         mission = load_mission(mission_id)
         if not mission:
             logger.error(f"Mission {mission_id} not found")
             raise ValueError(f"Mission {mission_id} not found")
-        # Get all squadron callsigns
-        squadrons = get_squadrons()
+        campaign_id = mission.get("campaign_id")
+        if not campaign_id:
+            raise ValueError("Mission missing campaign_id")
+        # Load campaign squadrons.json (dict keyed by squadron ID)
+        import os
+        from utils.storage import load_json
+        campaign_dir = os.path.join(os.path.dirname(__file__), '../instance/campaigns', campaign_id)
+        squadrons_path = os.path.join(campaign_dir, 'squadrons.json')
+        campaign_squadrons = load_json(squadrons_path).get('squadrons', {})
         squadron_id = flight_data["squadron"]
-        callsign_bank = squadrons.get(squadron_id, {}).get("callsigns", [squadron_id])
+        squadron_info = campaign_squadrons.get(squadron_id)
+        if not squadron_info:
+            raise ValueError(f"Squadron {squadron_id} not found in campaign squadrons.json")
+        # Use campaign-specific callsigns
+        callsign_bank = squadron_info.get('callsigns', [squadron_id])
         # Find all used callsigns and flight_numbers
         used_callsigns = set()
         used_numbers = set()
         if "flights" in mission:
             for f in mission["flights"].values():
-                used_callsigns.add(f["callsign"])
-                used_numbers.add(f["flight_number"])
+                if f["squadron"] == squadron_id:
+                    used_callsigns.add(f["callsign"])
+                    used_numbers.add(f["flight_number"])
+        # Find an available callsign and flight number
         selected_callsign = None
         selected_number = None
         found = False
@@ -120,11 +203,11 @@ def create_flight(mission_id, flight_data, user_id, username):
         mission_type = flight_data.get("mission_type", "NONE")
         remarks = flight_data.get("remarks", "")
         # Load mission_types.json for prefix
+        import json
         mission_types_path = os.path.join(os.path.dirname(__file__), '../config/mission_types.json')
         with open(mission_types_path) as f:
             mission_types = json.load(f)
         prefix = mission_types.get(mission_type, {}).get("transponder", "00")
-        # Each flight gets a block of 4 octal codes (00-03, 04-07, ...)
         block_start = selected_number * 4
         transponder_codes = []
         for i in range(4):
@@ -159,7 +242,18 @@ def create_flight(mission_id, flight_data, user_id, username):
             transponder_codes=transponder_codes,
             tacan_channel=tacan_channel,
             intraflight_freq=intraflight_freq,
-            pilots=[{"user_id": user_id, "username": username, "nickname": username, "position": "1", "joined_at": datetime.now().isoformat(), "callsign": pilot_callsign, "transponder": pilot_transponder, "aircraft": aircraft_id}],
+            pilots=[{
+                "user_id": user_id, 
+                "username": username, 
+                "nickname": username,  # display_name is passed as username
+                "position": "1", 
+                "joined_at": datetime.now().isoformat(), 
+                "callsign": pilot_callsign, 
+                "transponder": pilot_transponder, 
+                "squawk": pilot_transponder,  # for template compatibility
+                "aircraft": aircraft_id,
+                "aircraft_id": aircraft_id  # for template compatibility
+            }],
             side=flight_data.get("side", "blue")
         )
         logger.debug(f"[CREATE_FLIGHT] Flight object created: {flight.to_dict()}")
@@ -167,7 +261,7 @@ def create_flight(mission_id, flight_data, user_id, username):
         if "flights" not in mission:
             mission["flights"] = {}
         mission["flights"][flight.flight_id] = flight.to_dict()
-        logger.debug(f"[CREATE_FLIGHT] Mission structure before save: {mission}")
+        # Save the mission
         save_mission(mission)
         logger.info(f"[CREATE_FLIGHT] Flight {flight.flight_id} created and saved successfully.")
         return flight
@@ -176,9 +270,15 @@ def create_flight(mission_id, flight_data, user_id, username):
         raise
 
 def save_flight(flight):
-    """Save a flight to the mission's flight list"""
-    from utils.storage import load_mission, save_mission
+    """
+    Save a flight to the mission's flight list
     
+    Args:
+        flight (Flight): The flight object to save
+        
+    Returns:
+        bool: True if save was successful, False otherwise
+    """
     # Load the mission
     mission = load_mission(flight.mission_id)
     if not mission:
@@ -196,60 +296,95 @@ def save_flight(flight):
     return True
 
 def get_flight(flight_id, mission_id=None):
-    """Get a flight by ID"""
-    from utils.storage import load_mission, list_missions
+    """
+    Get a flight by ID
+    
+    Args:
+        flight_id (str): The flight ID to retrieve
+        mission_id (str, optional): The mission ID to search in. Defaults to None (search all missions).
+        
+    Returns:
+        Flight: The flight object if found, None otherwise
+    """
     logger.debug(f"[get_flight] Searching for flight_id={flight_id} in mission_id={mission_id}")
+    
     # If mission_id is provided, check only that mission
     if mission_id:
         mission = load_mission(mission_id)
         if mission and "flights" in mission:
             logger.debug(f"[get_flight] Available flight IDs in mission: {list(mission['flights'].keys())}")
             if flight_id in mission["flights"]:
-                return Flight.from_dict(mission["flights"][flight_id])
+                flight_data = convert_old_flight_data(mission["flights"][flight_id], mission_id)
+                return Flight.from_dict(flight_data)
         return None
+        
     # Otherwise, check all missions
     missions = list_missions()
-    for mission_id in missions:
-        mission = load_mission(mission_id)
+    for current_mission_id in missions:
+        mission = load_mission(current_mission_id)
         if mission and "flights" in mission:
-            logger.debug(f"[get_flight] Available flight IDs in mission {mission_id}: {list(mission['flights'].keys())}")
+            logger.debug(f"[get_flight] Available flight IDs in mission {current_mission_id}: {list(mission['flights'].keys())}")
             if flight_id in mission["flights"]:
-                return Flight.from_dict(mission["flights"][flight_id])
+                flight_data = convert_old_flight_data(mission["flights"][flight_id], current_mission_id)
+                return Flight.from_dict(flight_data)
+                
     logger.error(f"[get_flight] Flight {flight_id} not found in any mission")
     return None
 
 def get_mission_flights(mission_id):
-    """Get all flight IDs for a mission"""
-    from utils.storage import load_mission
+    """
+    Get all flight IDs for a mission
     
+    Args:
+        mission_id (str): The mission ID to get flights for
+        
+    Returns:
+        list: List of flight IDs in the mission
+    """
     mission = load_mission(mission_id)
-    if not mission:
-        return []
-    
-    if "flights" not in mission:
+    if not mission or "flights" not in mission:
         return []
     
     return list(mission["flights"].keys())
 
+
 def get_mission_flights_data(mission_id):
-    """Get all flight data for a mission"""
-    from utils.storage import load_mission
+    """
+    Get all flight data for a mission
     
+    Args:
+        mission_id (str): The mission ID to get flight data for
+        
+    Returns:
+        list: List of Flight objects in the mission
+    """
     mission = load_mission(mission_id)
-    if not mission:
-        return []
-    
-    if "flights" not in mission:
+    if not mission or "flights" not in mission:
         return []
     
     flights = []
     for flight_data in mission["flights"].values():
-        flights.append(Flight.from_dict(flight_data))
+        # Convert data to the standardized format
+        converted_data = convert_old_flight_data(flight_data, mission_id)
+        flights.append(Flight.from_dict(converted_data))
     
     return flights
 
 def join_flight(flight_id, user_id, username, position, mission_id=None, aircraft=None):
-    """Join a flight at the specified position, with selected aircraft"""
+    """
+    Join a flight at the specified position, with selected aircraft
+    
+    Args:
+        flight_id (str): The flight ID to join
+        user_id (str): User ID of the pilot joining
+        username (str): Username of the pilot joining
+        position (str): Position number in the flight (1-4)
+        mission_id (str, optional): Mission ID to narrow search. Defaults to None.
+        aircraft (str, optional): Aircraft ID to use. Defaults to None.
+        
+    Returns:
+        tuple: (Flight object if successful, message string)
+    """
     flight = get_flight(flight_id, mission_id)
     if not flight:
         return None, "Flight not found"
@@ -268,33 +403,43 @@ def join_flight(flight_id, user_id, username, position, mission_id=None, aircraf
         return None, "Aircraft must be selected"
 
     # Assign callsign and transponder code for this pilot
-    try:
-        pos_num = int(position)
-    except Exception:
-        pos_num = 0
-
     pilot_callsign = f"{flight.callsign}{flight.flight_number}{position}"
     pilot_transponder = None
+    try:
+        pos_num = int(position)
+    except ValueError:
+        pos_num = 0
     if flight.transponder_codes and 1 <= pos_num <= len(flight.transponder_codes):
         pilot_transponder = flight.transponder_codes[pos_num-1]
-
-    # Save the selected aircraft
-    pilot_aircraft = aircraft
     flight.pilots.append({
         "user_id": user_id,
         "username": username,
+        "nickname": username,  # display_name is passed as username
         "position": position,
         "joined_at": datetime.now().isoformat(),
         "callsign": pilot_callsign,
         "transponder": pilot_transponder,
-        "aircraft": pilot_aircraft
+        "squawk": pilot_transponder,  # for template compatibility
+        "aircraft": aircraft,
+        "aircraft_id": aircraft  # for template compatibility
     })
 
+    # Save changes to flight
     save_flight(flight)
     return flight, "Successfully joined flight"
 
 def leave_flight(flight_id, user_id, mission_id=None):
-    """Leave a flight"""
+    """
+    Leave a flight
+    
+    Args:
+        flight_id (str): The flight ID to leave
+        user_id (str): User ID of the pilot leaving
+        mission_id (str, optional): Mission ID to narrow search. Defaults to None.
+        
+    Returns:
+        tuple: (Flight object if still exists, message string)
+    """
     flight = get_flight(flight_id, mission_id)
     if not flight:
         return None, "Flight not found"
@@ -302,7 +447,7 @@ def leave_flight(flight_id, user_id, mission_id=None):
     # Check if user is in flight
     pilot_index = None
     for i, pilot in enumerate(flight.pilots):
-        if pilot["user_id"] == user_id:
+        if str(pilot["user_id"]) == str(user_id):
             pilot_index = i
             break
     
@@ -311,11 +456,45 @@ def leave_flight(flight_id, user_id, mission_id=None):
     
     # Remove pilot from flight
     flight.pilots.pop(pilot_index)
-    
-    # If flight is now empty, delete it
+
+    # If flight is now empty, delete it and restore curated slot if needed
     if not flight.pilots:
+        logger.info(f"[LEAVE_FLIGHT] Flight {flight_id} is now empty. Checking for curated slot restoration...")
+        mission = load_mission(flight.mission_id)
+        restored = False
+        if mission and 'curated_slots' in mission:
+            slot_idx = None
+            if hasattr(flight, 'claimed_from_slot'):
+                slot_idx = getattr(flight, 'claimed_from_slot', None)
+            elif hasattr(flight, 'to_dict') and 'claimed_from_slot' in flight.to_dict():
+                slot_idx = flight.to_dict().get('claimed_from_slot')
+            if slot_idx is not None and 'original_curated_slots' in mission:
+                try:
+                    slot_data = mission['original_curated_slots'][slot_idx]
+                    # If using squadron callsigns, clear label
+                    if slot_data.get('useSquadronCallsigns'):
+                        slot_data = dict(slot_data)
+                        slot_data['label'] = ''
+                    mission['curated_slots'].append(slot_data)
+                    logger.info(f"[LEAVE_FLIGHT] Restored curated slot from original_curated_slots idx {slot_idx} for flight {flight_id}")
+                    restored = True
+                except Exception as e:
+                    logger.warning(f"[LEAVE_FLIGHT] Could not restore curated slot from original_curated_slots: {e}")
+            if not restored:
+                # Fallback: reconstruct slot from flight data
+                slot_data = {
+                    'label': '' if getattr(flight, 'useSquadronCallsigns', True) else (flight.callsign or 'UNKNOWN'),
+                    'role': flight.mission_type or '',
+                    'squadrons': [flight.squadron] if flight.squadron else [],
+                    'seats': len(flight.aircraft_ids) if flight.aircraft_ids else 1,
+                    'description': flight.remarks or '',
+                    'useSquadronCallsigns': True
+                }
+                mission['curated_slots'].append(slot_data)
+                logger.info(f"[LEAVE_FLIGHT] Fallback: Reconstructed and restored curated slot for flight {flight_id}")
+            save_mission(mission)
         delete_flight(flight_id, flight.mission_id)
-        return None, "Flight deleted - no pilots remaining"
+        return None, "Flight deleted - no pilots remaining (curated slot restored if applicable)"
     
     # If flight lead left, promote next pilot to lead
     if pilot_index == 0 and flight.pilots:
@@ -327,9 +506,16 @@ def leave_flight(flight_id, user_id, mission_id=None):
     return flight, "Successfully left flight"
 
 def delete_flight(flight_id, mission_id=None):
-    """Delete a flight"""
-    from utils.storage import load_mission, save_mission
+    """
+    Delete a flight
     
+    Args:
+        flight_id (str): The flight ID to delete
+        mission_id (str, optional): Mission ID to narrow search. Defaults to None.
+        
+    Returns:
+        bool: True if deletion was successful, False otherwise
+    """
     # First try to find the flight
     flight = get_flight(flight_id, mission_id)
     if not flight:
@@ -343,7 +529,7 @@ def delete_flight(flight_id, mission_id=None):
             save_mission(mission)
             return True
     else:
-        # Otherwise, need to find which mission has this flight
+        # Otherwise, use the mission_id from the flight object
         mission_id = flight.mission_id
         mission = load_mission(mission_id)
         if mission and "flights" in mission and flight_id in mission["flights"]:

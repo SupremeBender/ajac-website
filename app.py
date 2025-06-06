@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def create_app():
     # Create Flask app
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_object('config')
+    # Load configuration from secret_config.py only (simplified single-file config)
     app.config.from_pyfile('secret_config.py')
     
     # Ensure instance directories exist
@@ -74,12 +74,14 @@ def register_blueprints(app):
     from features.signup import signup_bp
     from features.missions import missions_bp
     from features.campaigns import campaigns_bp
+    from features.admin.routes import admin_bp
     
     # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(signup_bp)
     app.register_blueprint(missions_bp)
     app.register_blueprint(campaigns_bp)
+    app.register_blueprint(admin_bp)
     
     # You'll add more blueprints here as you create them
 
@@ -138,19 +140,43 @@ def root():
         
         user_role_ids = [role['id'] for role in user_roles]
         
+        # --- Team override logic for admin testing ---
+        team_override = session.get('team_override', 'default')
+        # If override is set, force user into that team for this session
+        if team_override == 'blue':
+            is_blue_team = True
+            is_red_team = False
+            is_admin = False
+            is_mission_maker = False
+        elif team_override == 'red':
+            is_blue_team = False
+            is_red_team = True
+            is_admin = False
+            is_mission_maker = False
+        elif team_override == 'admin':
+            # Force admin/mission maker for testing
+            is_blue_team = any(r in user_role_ids for r in blue_team_roles)
+            is_red_team = any(r in user_role_ids for r in red_team_roles)
+            is_admin = True
+            is_mission_maker = True
+        else:
+            # Default: use real roles
+            is_blue_team = any(r in user_role_ids for r in blue_team_roles)
+            is_red_team = any(r in user_role_ids for r in red_team_roles)
+            is_admin = admin_role in user_role_ids
+            is_mission_maker = mission_maker_role in user_role_ids
+        
         # Access logic
         can_access_signup = True  # All logged-in users
-        can_access_missions = admin_role in user_role_ids or mission_maker_role in user_role_ids
-        can_access_campaigns = admin_role in user_role_ids or mission_maker_role in user_role_ids
-        
-        # Determine if user is admin or mission maker for template
-        is_admin = admin_role in user_role_ids
-        is_mission_maker = mission_maker_role in user_role_ids
+        can_access_missions = is_admin or is_mission_maker
+        can_access_campaigns = is_admin or is_mission_maker
         
         # Store important user info in session for templates
         session['display_name'] = nickname
         session['is_admin'] = is_admin
         session['is_mission_maker'] = is_mission_maker
+        session['is_blue_team'] = is_blue_team
+        session['is_red_team'] = is_red_team
         
         return render_template(
             "root.html",
@@ -161,7 +187,10 @@ def root():
             is_authenticated=True,
             is_admin=is_admin,
             is_mission_maker=is_mission_maker,
-            display_name=nickname
+            display_name=nickname,
+            is_blue_team=is_blue_team,
+            is_red_team=is_red_team,
+            team_override=team_override
         )
     except Exception as e:
         logger.error(f"Error in root route: {e}")
@@ -211,6 +240,51 @@ def discord_callback():
         logger.error(traceback.format_exc())
         session.clear()
         return redirect(url_for("auth.login"))
+
+@app.route("/profile", methods=["GET"])
+@login_required
+def profile():
+    """User profile page: show info only (no team override logic)"""
+    display_name = session.get('display_name', 'Unknown')
+    is_admin = session.get('is_admin', False)
+    user_id = session.get('user_id')
+    username = session.get('username', '')
+    avatar = session.get('avatar', '')
+
+    # Fetch Discord roles for this user
+    import requests
+    try:
+        resp = requests.get(f"http://localhost:8000/roles/{user_id}", timeout=2)
+        resp.raise_for_status()
+        response_data = resp.json()
+        user_roles = response_data.get("roles", [])
+    except Exception as e:
+        logger.error(f"Could not fetch roles from bot: {e}")
+        user_roles = []
+
+    # Get role config
+    admin_role = current_app.config.get("ADMIN_ROLE")
+    mission_maker_role = current_app.config.get("MISSION_MAKER_ROLE", "")
+    red_team_role = current_app.config.get("RED_TEAM_ROLE", "")
+    blue_team_role = current_app.config.get("BLUE_TEAM_ROLE", "")
+
+    user_role_ids = [role['id'] for role in user_roles]
+    has_admin = admin_role in user_role_ids
+    has_mission_maker = mission_maker_role in user_role_ids
+    has_red = red_team_role in user_role_ids
+    has_blue = blue_team_role in user_role_ids
+
+    return render_template(
+        "profile.html",
+        display_name=display_name,
+        is_admin=has_admin,
+        is_mission_maker=has_mission_maker,
+        has_red=has_red,
+        has_blue=has_blue,
+        user_id=user_id,
+        username=username,
+        avatar=avatar
+    )
 
 @app.errorhandler(404)
 def page_not_found(e):

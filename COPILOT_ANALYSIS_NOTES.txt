@@ -1,0 +1,319 @@
+=== AJAC DCS MISSION PLANNER - COPILOT ANALYSIS NOTES ===
+Generated: 2025-05-29
+Analyst: GitHub Copilot (Quality Control Analysis)
+
+=== PROJECT OVERVIEW ===
+- Flask web application for DCS (Digital Combat Simulator) mission planning
+- Fictional command: AJAC (Arctic Joint Air Command) at Andøya Airbase
+- Live production system used by real players
+- Authentication: Discord OAuth2
+- Storage: JSON files (no traditional database)
+- Deployment: Apache + mod_wsgi + systemd on VPS
+
+=== CRITICAL ISSUES IDENTIFIED ===
+
+1. **DATA MIGRATION PROBLEM** ⚠️ HIGH PRIORITY
+   Location: models/flight.py lines 200-250
+   Issue: Old flight format uses "members": ["username1", "username2"] (list of strings)
+         New format uses "pilots": [{"user_id": "123", "username": "user1", ...}] (list of dicts)
+   Impact: Data corruption, conversion errors, potential crashes
+   Status: Has conversion logic but incomplete/fragile
+
+2. **MISSING IMPORTS** ⚠️ HIGH PRIORITY
+   Location: models/flight.py lines 1-10
+   Issue: Missing critical imports: json, os, logging, uuid, traceback
+   Impact: Runtime errors, ImportError exceptions
+   Evidence: Line 4 references 'logger' but logging not imported
+
+3. **INCOMPLETE FUNCTIONS** ⚠️ MEDIUM PRIORITY
+   Location: models/flight.py save_flight(), get_flight(), get_mission_flights_data()
+   Issue: Functions have incomplete implementations with missing returns
+   Impact: Broken functionality, potential crashes
+
+4. **SECURITY VULNERABILITIES** ⚠️ HIGH PRIORITY
+   - No input sanitization in forms/JSON processing
+   - Direct file operations without path validation
+   - Session data trusted without verification
+   - No CSRF protection visible
+   - Discord bot API calls without proper error handling
+
+=== CODE QUALITY ISSUES ===
+
+1. **Error Handling**
+   - Inconsistent exception handling patterns
+   - Some functions fail silently (return None vs raise Exception)
+   - Network requests to Discord bot lack proper timeouts/retries
+
+2. **Logging**
+   - Mixed use of logger vs print statements
+   - Inconsistent log levels
+   - Debug logs may leak sensitive information
+
+3. **Data Validation**
+   - No input validation on forms
+   - JSON data trusted without schema validation
+   - User roles/permissions cached in session without refresh mechanism
+
+4. **Performance Issues**
+   - JSON files loaded/saved for every operation (no caching)
+   - Nested loops in flight assignment (O(n²) complexity)
+   - Synchronous HTTP calls blocking request threads
+
+=== ARCHITECTURE ISSUES ===
+
+1. **File Structure Mismatch**
+   Instructions specify app/ directory structure but actual uses flat structure
+   Current: features/, models/, utils/ at root
+   Expected: app/features/, app/models/, app/utils/
+
+2. **Configuration Management**
+   - Missing config.py file (referenced but not found)
+   - Secret config mixed with app config
+   - No environment-specific configurations
+
+3. **Dependency Management**
+   - Flask-Discord version 0.1.69 (very old, potential security issues)
+   - Mixed dependency versions
+   - No version pinning strategy
+
+=== SPECIFIC FINDINGS ===
+
+**app.py Analysis:**
+- Good: App factory pattern, logging setup, blueprint registration
+- Issues: Complex role checking logic in root route, mixed authentication flows
+- Security: Missing CSRF protection, session handling could be improved
+
+**utils/storage.py:**
+- Good: Consistent file operations, path handling
+- Issues: No file locking for concurrent access, no backup strategy
+- Performance: Loads entire JSON files for small operations
+
+**models/flight.py:**
+- Good: Clear class structure, data conversion awareness
+- Issues: Missing imports, incomplete functions, complex assignment logic
+- Critical: Data migration logic fragile and incomplete
+
+**features/signup/routes.py:**
+- Good: Proper authentication decorators, comprehensive logging
+- Issues: Complex role checking, hardcoded bot API URL
+- Performance: Synchronous HTTP calls in request handlers
+
+=== IMMEDIATE ACTIONS NEEDED ===
+
+1. Fix missing imports in models/flight.py
+2. Complete incomplete function implementations
+3. Add proper input validation
+4. Implement proper error handling patterns
+5. Add CSRF protection
+6. Review and test data migration logic
+
+=== RECOMMENDATIONS ===
+
+**Short Term (Critical):**
+- Fix import errors immediately
+- Complete broken functions
+- Add input validation to all forms
+- Implement proper error boundaries
+
+**Medium Term (Important):**
+- Refactor data migration logic
+- Add comprehensive logging
+- Implement caching layer for JSON operations
+- Add automated testing
+
+**Long Term (Architectural):**
+- Consider database migration for better performance
+- Implement proper CI/CD pipeline
+- Add monitoring and alerting
+- Security audit and penetration testing
+
+=== CRITICAL ERROR FOUND ===
+ERROR: TypeError in features/signup/routes.py line 187
+Issue: pilot["user_id"] == user_id - TypeError: string indices must be integers, not 'str'
+Cause: Data format mismatch - pilots list contains strings instead of dicts
+Impact: Site crashes when checking flight membership
+Status: LIVE PRODUCTION BUG causing 500 errors
+
+=== ADDITIONAL ISSUES IDENTIFIED ===
+
+5. **MISSING CONFIG.PY** ⚠️ HIGH PRIORITY
+   - app.py references 'config' module but config.py file missing
+   - Using secret_config.py directly instead
+   - No environment-specific configuration
+
+6. **TEMPLATE SECURITY ISSUES** ⚠️ MEDIUM PRIORITY
+   - Using Bootstrap 4.6.0 (outdated, potential vulnerabilities)
+   - Font Awesome 5.15.4 loaded from CDN without integrity hashes
+   - No Content Security Policy headers
+
+7. **MISSING TACAN CHANNELS CONFIG** ⚠️ LOW PRIORITY
+   - Warning in logs: "Resource file tacan_channels.json not found"
+   - System creating empty resource fallback
+
+=== CHANGES MADE ===
+(This section will track all modifications made during analysis/fixes)
+
+1. Created COPILOT_ANALYSIS_NOTES.txt - comprehensive analysis documentation
+
+# APACHE RESTART SOLUTION FOR DEV/PROD ENVIRONMENT
+# ================================================
+
+## PROBLEM IDENTIFIED
+- Beta and production share same Apache instance
+- `systemctl restart apache2` affects BOTH environments
+- Production users may be disrupted during beta development
+
+## SOLUTIONS IMPLEMENTED
+
+### ✅ RECOMMENDED: Touch WSGI file (beta app only)
+```bash
+touch /var/www/beta.ajac.no/wsgi.py
+```
+- Only restarts beta application
+- Zero impact on production
+- Fastest reload method
+
+### ✅ ALTERNATIVE: Graceful Apache reload
+```bash
+sudo systemctl reload apache2
+```
+- Reloads configs without dropping connections
+- Minimal production impact
+- Use for Apache config changes
+
+### ❌ AVOID: Full Apache restart
+```bash
+sudo systemctl restart apache2  # DON'T USE IN DEV
+```
+- Affects production users
+- Drops all active connections
+- Only use for major issues
+
+## CHANGE LOGGING SYSTEM
+- Created: COPILOT_CHANGELOG.md
+- Format: Timestamp + change type + file + detailed description
+- Purpose: Track all modifications with full context
+- Location: /var/www/beta.ajac.no/COPILOT_CHANGELOG.md
+
+# EMERGENCY FIXES COMPLETED
+# =========================
+
+=== USER FEEDBACK ON DATA STRUCTURE ===
+Date: 2025-05-29
+- APPROVED: Aircraft inventory within squadrons.json (squadrons own their aircraft)
+- APPROVED: Squadron base presets for campaign import
+- APPROVED: Self-contained campaigns (331 can be in multiple campaigns independently)
+- APPROVED: Caching layer implementation
+- REQUESTED: Full project cleanup and improvement plan
+
+=== COMPREHENSIVE CLEANUP & IMPROVEMENT PLAN ===
+
+**PHASE 1: EMERGENCY FIXES (CRITICAL - DO IMMEDIATELY)**
+- Fix missing imports in models/flight.py
+- Fix TypeError in features/signup/routes.py line 187
+- Complete broken function implementations
+- Create missing config.py file
+- Test critical user flows
+
+**PHASE 2: DATA STRUCTURE REDESIGN (HIGH PRIORITY)**
+- Implement new file hierarchy with campaign-specific data
+- Create squadron preset system for campaign import
+- Migrate existing data to new structure
+- Add data validation and migration scripts
+
+**PHASE 3: PERFORMANCE & CACHING (HIGH PRIORITY)**
+- Implement smart caching layer for JSON operations
+- Add concurrent access protection
+- Optimize data loading patterns
+- Add performance monitoring
+
+**PHASE 4: SECURITY HARDENING (HIGH PRIORITY)**
+- Add input validation and sanitization
+- Implement CSRF protection
+- Update dependencies (Flask-Discord, etc.)
+- Add security headers and policies
+
+**PHASE 5: ARCHITECTURE CLEANUP (MEDIUM PRIORITY)**
+- Standardize error handling patterns
+- Improve logging strategy
+- Add comprehensive testing
+- Documentation improvements
+
+# REQUIREMENTS QUESTIONNAIRE PHASE
+# =====================================
+
+## COMPREHENSIVE QUESTIONNAIRE CREATED
+- Created: REQUIREMENTS_QUESTIONNAIRE.md
+- Purpose: Eliminate all ambiguity before implementing fixes
+- Sections: 12 major areas with 60+ detailed questions
+- Coverage: Business logic, technical requirements, user workflows, security, performance
+
+## QUESTIONNAIRE AREAS
+1. Core Application Purpose & User Workflows
+   - Primary goals and target users
+   - User roles and permission levels
+   - Typical mission planning workflow
+
+2. Campaign & Data Management
+   - Campaign structure and lifecycle
+   - Squadron membership and management
+   - Aircraft inventory and assignment
+
+3. Mission Planning Specifics
+   - Essential mission information
+   - Pilot participation workflow
+   - Mission execution and tracking
+
+4. Discord Integration
+   - Authentication requirements
+   - Notification preferences
+   - Integration features needed
+
+5. Performance & Scalability
+   - Expected usage patterns
+   - Performance requirements
+   - Data retention policies
+
+6. Security & Compliance
+   - Security level requirements
+   - Data protection needs
+   - Compliance considerations
+
+7. User Interface & Experience
+   - Design preferences
+   - Key feature priorities
+   - Accessibility requirements
+
+8. Technical Preferences
+   - Architecture decisions
+   - Maintenance considerations
+   - Admin panel needs
+
+9. Future Roadmap
+   - Planned features
+   - Extensibility requirements
+   - Third-party integrations
+
+10. Budget & Timeline
+    - Resource constraints
+    - Priority rankings
+    - Success metrics
+
+## QUESTIONS DESIGNED TO RESOLVE
+- User workflow ambiguities identified in analysis
+- Permission model for multi-squadron users
+- Campaign vs squadron data organization
+- Discord integration scope and requirements
+- Security level appropriate for use case
+- Performance expectations and scalability needs
+- Feature prioritization for development phases
+
+## NEXT STEPS AFTER QUESTIONNAIRE
+1. Review responses and clarify any remaining ambiguities
+2. Create detailed technical specification based on answers
+3. Update improvement plan phases based on priorities
+4. Begin implementation with emergency fixes first
+5. Validate each phase against user requirements
+
+# ORIGINAL ANALYSIS CONTINUES BELOW
+# ===================================

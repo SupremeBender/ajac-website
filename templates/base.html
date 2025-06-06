@@ -219,8 +219,18 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                {# Defensive context/session checks for all navbar logic #}
+                {% if session is defined and session.get is defined %}
+                    {% set is_admin = session.get('is_admin', False) %}
+                    {% set is_mission_maker = session.get('is_mission_maker', False) %}
+                    {% set is_authenticated = session.get('user_id') or session.get('is_authenticated') %}
+                {% else %}
+                    {% set is_admin = is_admin if is_admin is defined else False %}
+                    {% set is_mission_maker = is_mission_maker if is_mission_maker is defined else False %}
+                    {% set is_authenticated = is_authenticated if is_authenticated is defined else False %}
+                {% endif %}
                 <ul class="navbar-nav mr-auto">
-                    {% if session.user_id or session.is_authenticated %}
+                    {% if is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('root') }}">
                             <i class="fas fa-home mr-1"></i> Home
@@ -231,10 +241,10 @@
                             <i class="fas fa-clipboard-list mr-1"></i> Mission Signup
                         </a>
                     </li>
-                    {% if session.is_admin or session.is_mission_maker or is_admin is defined and is_admin or is_mission_maker is defined and is_mission_maker %}
+                    {% if is_admin or is_mission_maker %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">
-                            <i class="fas fa-cogs mr-1"></i> Admin
+                        <a class="nav-link dropdown-toggle" href="#" id="missionMakerDropdown" role="button" data-toggle="dropdown">
+                            <i class="fas fa-tools mr-1"></i> Mission Maker
                         </a>
                         <div class="dropdown-menu">
                             <a class="dropdown-item" href="{{ url_for('missions.list_missions') }}">
@@ -246,13 +256,39 @@
                         </div>
                     </li>
                     {% endif %}
+                    {% if is_admin %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown">
+                            <i class="fas fa-cogs mr-1"></i> Admin
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{ url_for('admin.list_squadrons') }}">
+                                <i class="fas fa-users mr-1"></i> Squadrons
+                            </a>
+                            <a class="dropdown-item" href="{{ url_for('admin.create_squadron') }}">
+                                <i class="fas fa-plus mr-1"></i> Create Squadron
+                            </a>
+                        </div>
+                    </li>
+                    {% endif %}
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
-                    {% if session.user_id or session.is_authenticated %}
+                    {% if is_authenticated %}
                     <li class="nav-item">
                         <span class="nav-link">
-                            <i class="fas fa-user mr-1"></i> {{ session.display_name if session.display_name else display_name if display_name else session.username if session.username else "User" }}
+                            <i class="fas fa-user mr-1"></i> 
+                            <a href="{{ url_for('profile') }}" aria-label="My Profile">
+                                {% if session is defined and session.get is defined and session.get('display_name') %}
+                                    {{ session.get('display_name') }}
+                                {% elif display_name is defined and display_name %}
+                                    {{ display_name }}
+                                {% elif session is defined and session.get is defined and session.get('username') %}
+                                    {{ session.get('username') }}
+                                {% else %}
+                                    User
+                                {% endif %}
+                            </a>
                         </span>
                     </li>
                     <li class="nav-item">
@@ -292,7 +328,7 @@
         <div class="container">
             <div class="row">
                 <div class="col text-center">
-                    <p class="m-0">&copy; {{ current_year if current_year else now().year }} AJAC Flight Operations</p>
+                    <p class="m-0">&copy; {{ current_year }} AJAC Flight Operations</p>
                 </div>
             </div>
         </div>

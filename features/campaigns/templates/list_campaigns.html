@@ -24,6 +24,8 @@
                             &nbsp;|&nbsp;
                             <strong>Status:</strong> {{ campaign.status|capitalize }}
                         </div>
+                        <!-- Edit Campaign button -->
+                        <a href="{{ url_for('campaigns.edit_campaign', campaign_id=campaign.id) }}" class="btn btn-sm btn-outline-info mt-2" aria-label="Edit {{ campaign.name }}">Edit Campaign</a>
                     </div>
                 </div>
                 {% endfor %}
