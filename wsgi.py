@@ -8,9 +8,8 @@ sys.path.insert(0, BASE_DIR)
 
 try:
     from app import app as application
-except Exception as e:
-    # Log import errors to Apache error log
-    import traceback
+except Exception:           # keep original traceback logging
+    import traceback, sys
     with open('/tmp/wsgi_error.log', 'w') as f:
         f.write(traceback.format_exc())
     raise
