@@ -43,7 +43,9 @@ def dashboard():
     # Fetch roles from your bot API
     try:
         logger.debug(f"Fetching roles and nickname for user ID {user_id}")
-        resp = requests.get(f"http://localhost:8000/roles/{user_id}", timeout=2)
+        resp = requests.get(
+            f"{current_app.config['BOT_API_URL']}/roles/{user_id}", timeout=2
+        )
         resp.raise_for_status()
         response_data = resp.json()
         user_roles = response_data.get("roles", [])
@@ -111,7 +113,9 @@ def signup_mission(mission_id):
     
     # Get roles and nickname
     try:
-        resp = requests.get(f"http://localhost:8000/roles/{user_id}", timeout=2)
+        resp = requests.get(
+            f"{current_app.config['BOT_API_URL']}/roles/{user_id}", timeout=2
+        )
         resp.raise_for_status()
         response_data = resp.json()
         user_roles = response_data.get("roles", [])
@@ -271,7 +275,9 @@ def process_signup(mission_id):
     
     # Get nickname
     try:
-        resp = requests.get(f"http://localhost:8000/roles/{user_id}", timeout=2)
+        resp = requests.get(
+            f"{current_app.config['BOT_API_URL']}/roles/{user_id}", timeout=2
+        )
         resp.raise_for_status()
         response_data = resp.json()
         nickname = response_data.get("nickname", user.username)
@@ -334,7 +340,9 @@ def create_new_flight(mission_id):
     user_id = str(user.id)
     # Use display_name for all flight creation/joining
     try:
-        resp = requests.get(f"http://localhost:8000/roles/{user_id}", timeout=2)
+        resp = requests.get(
+            f"{current_app.config['BOT_API_URL']}/roles/{user_id}", timeout=2
+        )
         resp.raise_for_status()
         response_data = resp.json()
         nickname = response_data.get("nickname", user.username)
@@ -447,7 +455,9 @@ def join_existing_flight(mission_id, flight_id):
     user = discord.fetch_user()
     user_id = str(user.id)
     try:
-        resp = requests.get(f"http://localhost:8000/roles/{user_id}", timeout=2)
+        resp = requests.get(
+            f"{current_app.config['BOT_API_URL']}/roles/{user_id}", timeout=2
+        )
         resp.raise_for_status()
         response_data = resp.json()
         nickname = response_data.get("nickname", user.username)
