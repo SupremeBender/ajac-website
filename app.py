@@ -15,6 +15,8 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     # Load configuration from secret_config.py only (simplified single-file config)
     app.config.from_pyfile('secret_config.py')
+    # Provide default for bot API URL if not set
+    app.config.setdefault('BOT_API_URL', 'http://localhost:8000')
     
     # Ensure instance directories exist
     os.makedirs(os.path.join(app.instance_path, 'campaigns'), exist_ok=True)
@@ -116,7 +118,7 @@ def root():
         # Fetch roles from bot API
         import requests
         try:
-            resp = requests.get(f"http://localhost:8000/roles/{user_id}", timeout=2)
+            resp = requests.get(f"{current_app.config['BOT_API_URL']}/roles/{user_id}", timeout=2)
             resp.raise_for_status()
             response_data = resp.json()
             user_roles = response_data.get("roles", [])
@@ -254,7 +256,7 @@ def profile():
     # Fetch Discord roles for this user
     import requests
     try:
-        resp = requests.get(f"http://localhost:8000/roles/{user_id}", timeout=2)
+        resp = requests.get(f"{current_app.config['BOT_API_URL']}/roles/{user_id}", timeout=2)
         resp.raise_for_status()
         response_data = resp.json()
         user_roles = response_data.get("roles", [])
