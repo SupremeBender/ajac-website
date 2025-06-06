@@ -308,5 +308,5 @@ def add_squadron_to_campaign():
 
     # Add or update the squadron in the dict
     campaign_squadrons[squadron_id] = new_entry
-    save_json({'squadrons': campaign_squadrons}, squadrons_path)
+    save_json(squadrons_path, {'squadrons': campaign_squadrons})
     return jsonify({"success": True, "squadron": new_entry})
