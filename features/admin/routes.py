@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 import json
 import os
-from werkzeug.utils import secure_filename
 from utils.auth import admin_required
 
 admin_bp = Blueprint('admin', __name__, template_folder='templates')
@@ -9,6 +8,7 @@ admin_bp = Blueprint('admin', __name__, template_folder='templates')
 SQUADRONS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', 'squadrons.json')
 
 @admin_bp.route('/admin/create_squadron', methods=['GET', 'POST'])
+@admin_required
 def create_squadron():
     if request.method == 'POST':
         # Get form data
